@@ -1,0 +1,7 @@
+.idea
+*.log*
+*.exe
+
+_output
+__debug_bin
+pkg
