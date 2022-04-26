@@ -175,9 +175,14 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		for k, v := range imap {
 			r[k] = v.(string)
 		}
+		decodedValue, err := url.QueryUnescape(r["depotFile"])
+		if err != nil {
+			log.Fatal(err)
+			return nil
+		}
 
 		st := Stat{
-			DepotFile:  r["depotFile"],
+			DepotFile:  decodedValue,
 			HeadAction: r["headAction"],
 			Digest:     r["digest"],
 			HeadType:   r["headType"],
