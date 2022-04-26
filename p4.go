@@ -163,13 +163,24 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		}
 		return &Dir{Dir: decodedValue}
 	case "files":
-		encodedValue := imap["depotFile"].(string)
-		decodedValue, err := url.QueryUnescape(encodedValue)
+		r := map[string]string{}
+		for k, v := range imap {
+			r[k] = v.(string)
+		}
+		decodedValue, err := url.QueryUnescape(r["depotFile"])
 		if err != nil {
 			log.Fatal(err)
 			return nil
 		}
-		return &File{File: decodedValue}
+		f := File{
+			Code:      r["code"],
+			DepotFile: decodedValue,
+			Action:    r["action"],
+			Type:      r["type"],
+		}
+		f.Revision, _ = strconv.ParseInt(r["rev"], 10, 64)
+		f.ModTime, _ = strconv.ParseInt(r["time"], 10, 64)
+		return &f
 	case "fstat":
 		r := map[string]string{}
 		for k, v := range imap {
@@ -283,11 +294,16 @@ func (f *Stat) String() string {
 
 // File has the data for a single file.
 type File struct {
-	File string
+	Code      string
+	DepotFile string
+	Revision  int64
+	Action    string
+	Type      string
+	ModTime   int64
 }
 
 func (f *File) String() string {
-	return f.File
+	return f.DepotFile
 }
 
 type Dir struct {
