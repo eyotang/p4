@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -155,26 +154,15 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 
 	switch command {
 	case "dirs":
-		encodedValue := imap["dir"].(string)
-		decodedValue, err := url.QueryUnescape(encodedValue)
-		if err != nil {
-			log.Fatal(err)
-			return nil
-		}
-		return &Dir{Dir: decodedValue}
+		return &Dir{Dir: imap["dir"].(string)}
 	case "files":
 		r := map[string]string{}
 		for k, v := range imap {
 			r[k] = v.(string)
 		}
-		decodedValue, err := url.QueryUnescape(r["depotFile"])
-		if err != nil {
-			log.Fatal(err)
-			return nil
-		}
 		f := File{
 			Code:      r["code"],
-			DepotFile: decodedValue,
+			DepotFile: r["depotFile"],
 			Action:    r["action"],
 			Type:      r["type"],
 		}
@@ -186,14 +174,9 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		for k, v := range imap {
 			r[k] = v.(string)
 		}
-		decodedValue, err := url.QueryUnescape(r["depotFile"])
-		if err != nil {
-			log.Fatal(err)
-			return nil
-		}
 
 		st := Stat{
-			DepotFile:  decodedValue,
+			DepotFile:  r["depotFile"],
 			HeadAction: r["headAction"],
 			Digest:     r["digest"],
 			HeadType:   r["headType"],
