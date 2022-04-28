@@ -54,7 +54,6 @@ var tokenRegexp = regexp.MustCompile("([0-9A-Z]{32})")
 
 func (p *Conn) Login() (err error) {
 	env := []string{
-		"HOME=" + os.Getenv("HOME"),
 		//"P4CLIENT=" + p.Client,
 		"P4PORT=" + p.address,
 		"P4USER=" + p.username,
@@ -66,6 +65,7 @@ func (p *Conn) Login() (err error) {
 		home := os.Getenv("HOME")
 		env = append(env, "P4TRUST="+path.Join(home, ".p4trust"))
 	}
+	//fmt.Println(env)
 
 	var (
 		password bytes.Buffer
