@@ -13,10 +13,9 @@ import (
 	"github.com/eyotang/p4"
 )
 
-
 func main() {
-    var (
-        address  = "localhost:1666"
+	var (
+		address  = "localhost:1666"
 		user     = "tangyongqiang"
 		password = "123456"
 	)
