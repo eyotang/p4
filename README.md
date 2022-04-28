@@ -34,7 +34,7 @@ func main() {
 }
 ```
 
-NOTE: If you use supervisor to start your application, please set `HOME` environment first in supervisor configure file. Don't use `~` or `"%(ENV_HOME)s"`, just use as following:
+**NOTE:**  If using supervisor to start your application, please set `HOME` environment first in supervisor configure file. Don't use `~` or `"%(ENV_HOME)s"`, just use as following:
 
 ```ini
 [program:demo]
