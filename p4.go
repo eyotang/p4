@@ -62,6 +62,9 @@ func (p *Conn) Login() (err error) {
 	if runtime.GOOS == "windows" {
 		home := os.Getenv("USERPROFILE")
 		env = append(env, "P4TRUST="+path.Join(home, "p4trust.txt"))
+	} else {
+		home := os.Getenv("HOME")
+		env = append(env, "P4TRUST="+path.Join(home, ".p4trust"))
 	}
 
 	var (
