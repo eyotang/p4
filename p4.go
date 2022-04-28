@@ -31,18 +31,18 @@ type Conn struct {
 	env []string
 }
 
-func NewConn(address, username, password string) *Conn {
-	conn := &Conn{
+func NewConn(address, username, password string) (conn *Conn, err error) {
+	conn = &Conn{
 		ConnOptions: ConnOptions{
 			binary:   "p4",
 			address:  address,
 			username: username,
 			password: password,
 		}}
-	if err := conn.Login(); err != nil {
-		return nil
+	if err = conn.Login(); err != nil {
+		return
 	}
-	return conn
+	return
 }
 
 type TagLine struct {
