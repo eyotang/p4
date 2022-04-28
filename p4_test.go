@@ -12,7 +12,11 @@ func TestDirs(t *testing.T) {
 		password = "123456"
 	)
 
-	c := NewConn(address, user, password)
+	c, err := NewConn(address, user, password)
+	if err != nil {
+		t.Fatalf("NewConn failed! err: %+v", err)
+		return
+	}
 	rs, err := c.Dirs([]string{"//depot/*@700"})
 	if err != nil {
 		t.Fatalf("p4.Dirs: %v", err)
