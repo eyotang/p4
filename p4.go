@@ -5,6 +5,7 @@
 package p4
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -212,6 +213,20 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		t, _ := strconv.ParseInt(r["time"], 10, 64)
 		c.Time = int(t)
 		return &c
+
+	case "group":
+		var users []string
+		groupUserInfo := GroupUserInfo{
+			Group: imap["Group"].(string),
+		}
+		for k, v := range imap {
+			if strings.HasPrefix(k, "Users") {
+				users = append(users, v.(string))
+			}
+		}
+		groupUserInfo.Users = users
+		return &groupUserInfo
+
 	default:
 		log.Panicf("unknown code %q", command)
 	}
@@ -243,6 +258,27 @@ func (p *Conn) Print(path string) (content []byte, err error) {
 
 func (p *Conn) Changes(paths []string) ([]Result, error) {
 	return p.RunMarshaled("changes", append([]string{"-l"}, paths...))
+}
+
+// P4Admin
+func (p *Conn) Groups() (result []Result, err error) {
+	var out []byte
+	if out, err = p.Output([]string{"groups", "-i"}); err != nil {
+		return
+	}
+	r := bytes.NewBuffer(out)
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		result = append(result, &GroupInfo{Group: scanner.Text()})
+	}
+	return
+}
+
+func (p *Conn) Members(group string) ([]Result, error) {
+	if runtime.GOOS == "windows" {
+		p.env = append(p.env, "P4CHARSET=cp936")
+	}
+	return p.RunMarshaled("group", []string{"-o", group})
 }
 
 ////////////////
@@ -319,4 +355,21 @@ func (c *Change) String() string {
 		l = 250
 	}
 	return fmt.Sprintf("change %d by %s - %s", c.Change, c.User, strings.Trim(c.Desc[:l], " "))
+}
+
+type GroupInfo struct {
+	Group string
+}
+
+func (g *GroupInfo) String() string {
+	return fmt.Sprintf("group: %s", g.Group)
+}
+
+type GroupUserInfo struct {
+	Group string
+	Users []string
+}
+
+func (gu *GroupUserInfo) String() string {
+	return fmt.Sprintf("group: %s, users: %v", gu.Group, gu.Users)
 }
