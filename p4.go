@@ -69,16 +69,14 @@ func (p *Conn) Login() (err error) {
 	//fmt.Println(env)
 
 	var (
-		password bytes.Buffer
+		password = bytes.NewBufferString(p.password)
 		token    bytes.Buffer
 		errors   bytes.Buffer
 	)
 
-	password.Write([]byte(p.password))
-
 	cmd := exec.Command(p.binary, "login", "-p")
 	cmd.Env = env
-	cmd.Stdin = &password
+	cmd.Stdin = password
 	cmd.Stdout = &token
 	cmd.Stderr = &errors
 
@@ -100,6 +98,31 @@ func (p *Conn) Output(args []string) ([]byte, error) {
 	cmd := exec.Cmd{
 		Path: b,
 		Args: []string{p.binary},
+	}
+	if p.env != nil {
+		cmd.Env = p.env
+	}
+	if p.address != "" {
+		cmd.Args = append(cmd.Args, "-p", p.address)
+	}
+	cmd.Args = append(cmd.Args, args...)
+
+	//log.Println("running", cmd.Args)
+	return cmd.Output()
+}
+
+func (p *Conn) Input(args []string, input []byte) ([]byte, error) {
+	var (
+		content = bytes.NewBuffer(input)
+	)
+	b := p.binary
+	if !strings.Contains(b, "/") {
+		b, _ = exec.LookPath(b)
+	}
+	cmd := exec.Cmd{
+		Path:  b,
+		Args:  []string{p.binary},
+		Stdin: content,
 	}
 	if p.env != nil {
 		cmd.Env = p.env
