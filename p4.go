@@ -17,6 +17,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // Conn is an interface to the Conn command line client.
@@ -71,18 +73,18 @@ func (p *Conn) Login() (err error) {
 	var (
 		password = bytes.NewBufferString(p.password)
 		token    bytes.Buffer
-		errors   bytes.Buffer
+		stderr   bytes.Buffer
 	)
 
 	cmd := exec.Command(p.binary, "login", "-p")
 	cmd.Env = env
 	cmd.Stdin = password
 	cmd.Stdout = &token
-	cmd.Stderr = &errors
+	cmd.Stderr = &stderr
 
 	log.Println("running", cmd.Args)
 	if err = cmd.Run(); err != nil {
-		return P4Error{err, []string{"p4", "login"}, errors.Bytes()}
+		return P4Error{err, []string{"p4", "login"}, stderr.Bytes()}
 	}
 	env = append(env, "P4PASSWD="+tokenRegexp.FindString(token.String()))
 	p.env = env
@@ -90,39 +92,20 @@ func (p *Conn) Login() (err error) {
 }
 
 // Output runs p4 and captures stdout.
-func (p *Conn) Output(args []string) ([]byte, error) {
-	b := p.binary
-	if !strings.Contains(b, "/") {
-		b, _ = exec.LookPath(b)
-	}
-	cmd := exec.Cmd{
-		Path: b,
-		Args: []string{p.binary},
-	}
-	if p.env != nil {
-		cmd.Env = p.env
-	}
-	if p.address != "" {
-		cmd.Args = append(cmd.Args, "-p", p.address)
-	}
-	cmd.Args = append(cmd.Args, args...)
-
-	//log.Println("running", cmd.Args)
-	return cmd.Output()
-}
-
-func (p *Conn) Input(args []string, input []byte) ([]byte, error) {
+func (p *Conn) Output(args []string) (out []byte, err error) {
 	var (
-		content = bytes.NewBuffer(input)
+		stdout bytes.Buffer
+		stderr bytes.Buffer
 	)
 	b := p.binary
 	if !strings.Contains(b, "/") {
 		b, _ = exec.LookPath(b)
 	}
 	cmd := exec.Cmd{
-		Path:  b,
-		Args:  []string{p.binary},
-		Stdin: content,
+		Path:   b,
+		Args:   []string{p.binary},
+		Stdout: &stdout,
+		Stderr: &stderr,
 	}
 	if p.env != nil {
 		cmd.Env = p.env
@@ -132,8 +115,43 @@ func (p *Conn) Input(args []string, input []byte) ([]byte, error) {
 	}
 	cmd.Args = append(cmd.Args, args...)
 
-	//log.Println("running", cmd.Args)
-	return cmd.Output()
+	if err = cmd.Run(); err != nil {
+		err = errors.Wrap(err, stderr.String())
+	}
+	out = stdout.Bytes()
+	return
+}
+
+func (p *Conn) Input(args []string, input []byte) (out []byte, err error) {
+	var (
+		content = bytes.NewBuffer(input)
+		stdout  bytes.Buffer
+		stderr  bytes.Buffer
+	)
+	b := p.binary
+	if !strings.Contains(b, "/") {
+		b, _ = exec.LookPath(b)
+	}
+	cmd := exec.Cmd{
+		Path:   b,
+		Args:   []string{p.binary},
+		Stdin:  content,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+	if p.env != nil {
+		cmd.Env = p.env
+	}
+	if p.address != "" {
+		cmd.Args = append(cmd.Args, "-p", p.address)
+	}
+	cmd.Args = append(cmd.Args, args...)
+
+	if err = cmd.Run(); err != nil {
+		err = errors.Wrap(err, stderr.String())
+	}
+	out = stdout.Bytes()
+	return
 }
 
 // Runs p4 with -G and captures the result lines.
