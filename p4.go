@@ -5,7 +5,6 @@
 package p4
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -48,18 +47,13 @@ func NewConn(address, username, password string) (conn *Conn, err error) {
 	return
 }
 
-type TagLine struct {
-	Tag   string
-	Value []byte
-}
-
 var tokenRegexp = regexp.MustCompile("([0-9A-Z]{32})")
 
-func (p *Conn) Login() (err error) {
+func (conn *Conn) Login() (err error) {
 	env := []string{
-		//"P4CLIENT=" + p.Client,
-		"P4PORT=" + p.address,
-		"P4USER=" + p.username,
+		//"P4CLIENT=" + conn.Client,
+		"P4PORT=" + conn.address,
+		"P4USER=" + conn.username,
 	}
 	if runtime.GOOS == "windows" {
 		home := os.Getenv("USERPROFILE")
@@ -71,12 +65,12 @@ func (p *Conn) Login() (err error) {
 	//fmt.Println(env)
 
 	var (
-		password = bytes.NewBufferString(p.password)
+		password = bytes.NewBufferString(conn.password)
 		token    bytes.Buffer
 		stderr   bytes.Buffer
 	)
 
-	cmd := exec.Command(p.binary, "login", "-p")
+	cmd := exec.Command(conn.binary, "login", "-p")
 	cmd.Env = env
 	cmd.Stdin = password
 	cmd.Stdout = &token
@@ -87,31 +81,31 @@ func (p *Conn) Login() (err error) {
 		return P4Error{err, []string{"p4", "login"}, stderr.Bytes()}
 	}
 	env = append(env, "P4PASSWD="+tokenRegexp.FindString(token.String()))
-	p.env = env
+	conn.env = env
 	return
 }
 
 // Output runs p4 and captures stdout.
-func (p *Conn) Output(args []string) (out []byte, err error) {
+func (conn *Conn) Output(args []string) (out []byte, err error) {
 	var (
 		stdout bytes.Buffer
 		stderr bytes.Buffer
 	)
-	b := p.binary
+	b := conn.binary
 	if !strings.Contains(b, "/") {
 		b, _ = exec.LookPath(b)
 	}
 	cmd := exec.Cmd{
 		Path:   b,
-		Args:   []string{p.binary},
+		Args:   []string{conn.binary},
 		Stdout: &stdout,
 		Stderr: &stderr,
 	}
-	if p.env != nil {
-		cmd.Env = p.env
+	if conn.env != nil {
+		cmd.Env = conn.env
 	}
-	if p.address != "" {
-		cmd.Args = append(cmd.Args, "-p", p.address)
+	if conn.address != "" {
+		cmd.Args = append(cmd.Args, "-p", conn.address)
 	}
 	cmd.Args = append(cmd.Args, args...)
 
@@ -122,28 +116,28 @@ func (p *Conn) Output(args []string) (out []byte, err error) {
 	return
 }
 
-func (p *Conn) Input(args []string, input []byte) (out []byte, err error) {
+func (conn *Conn) Input(args []string, input []byte) (out []byte, err error) {
 	var (
 		content = bytes.NewBuffer(input)
 		stdout  bytes.Buffer
 		stderr  bytes.Buffer
 	)
-	b := p.binary
+	b := conn.binary
 	if !strings.Contains(b, "/") {
 		b, _ = exec.LookPath(b)
 	}
 	cmd := exec.Cmd{
 		Path:   b,
-		Args:   []string{p.binary},
+		Args:   []string{conn.binary},
 		Stdin:  content,
 		Stdout: &stdout,
 		Stderr: &stderr,
 	}
-	if p.env != nil {
-		cmd.Env = p.env
+	if conn.env != nil {
+		cmd.Env = conn.env
 	}
-	if p.address != "" {
-		cmd.Args = append(cmd.Args, "-p", p.address)
+	if conn.address != "" {
+		cmd.Args = append(cmd.Args, "-p", conn.address)
 	}
 	cmd.Args = append(cmd.Args, args...)
 
@@ -155,9 +149,9 @@ func (p *Conn) Input(args []string, input []byte) (out []byte, err error) {
 }
 
 // Runs p4 with -G and captures the result lines.
-func (p *Conn) RunMarshaled(command string, args []string) (result []Result, err error) {
+func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, err error) {
 	var out []byte
-	if out, err = p.Output(append([]string{"-G", command}, args...)); err != nil {
+	if out, err = conn.Output(append([]string{"-G", command}, args...)); err != nil {
 		return
 	}
 	r := bytes.NewBuffer(out)
@@ -274,54 +268,6 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 	return nil
 }
 
-func (p *Conn) Fstat(paths []string) (results []Result, err error) {
-	r, err := p.RunMarshaled("fstat",
-		append([]string{"-Of", "-Ol"}, paths...))
-	return r, err
-}
-
-func (p *Conn) Files(paths []string) (results []Result, err error) {
-	return p.RunMarshaled("files", paths)
-}
-
-func (p *Conn) Dirs(paths []string) ([]Result, error) {
-	return p.RunMarshaled("dirs", paths)
-}
-
-func (p *Conn) Print(path string) (content []byte, err error) {
-	// -q : suppress header line.
-	out, err := p.Output([]string{"print", "-q", path})
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (p *Conn) Changes(paths []string) ([]Result, error) {
-	return p.RunMarshaled("changes", append([]string{"-l"}, paths...))
-}
-
-// P4Admin
-func (p *Conn) Groups() (result []Result, err error) {
-	var out []byte
-	if out, err = p.Output([]string{"groups", "-i"}); err != nil {
-		return
-	}
-	r := bytes.NewBuffer(out)
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		result = append(result, &GroupInfo{Group: scanner.Text()})
-	}
-	return
-}
-
-func (p *Conn) Members(group string) ([]Result, error) {
-	if runtime.GOOS == "windows" {
-		p.env = append(p.env, "P4CHARSET=cp936")
-	}
-	return p.RunMarshaled("group", []string{"-o", group})
-}
-
 ////////////////
 type Result interface {
 	String() string
@@ -335,82 +281,4 @@ type Error struct {
 
 func (e *Error) String() string {
 	return fmt.Sprintf("error %d(%d): %s", e.Generic, e.Severity, e.Data)
-}
-
-// Stat has the data for a single file revision.
-type Stat struct {
-	DepotFile   string
-	HeadAction  string
-	HeadType    string
-	HeadTime    int64
-	HeadRev     int64
-	HeadChange  int64
-	HeadModTime int64
-	FileSize    int64
-	Digest      string
-}
-
-func (f *Stat) String() string {
-	return fmt.Sprintf("%s#%d - change %d (%s)",
-		f.DepotFile, f.HeadRev, f.HeadChange, f.HeadType)
-}
-
-// File has the data for a single file.
-type File struct {
-	Code      string
-	DepotFile string
-	Revision  int64
-	Action    string
-	Type      string
-	ModTime   int64
-}
-
-func (f *File) String() string {
-	return f.DepotFile
-}
-
-type Dir struct {
-	Dir string
-}
-
-func (f *Dir) String() string {
-	return fmt.Sprintf("%s/", f.Dir)
-}
-
-type Change struct {
-	Desc   string
-	User   string
-	Status string
-	Change int
-	Time   int
-
-	Path       string
-	Code       string
-	ChangeType string
-	Client     string
-}
-
-func (c *Change) String() string {
-	l := len(c.Desc)
-	if l > 250 {
-		l = 250
-	}
-	return fmt.Sprintf("change %d by %s - %s", c.Change, c.User, strings.Trim(c.Desc[:l], " "))
-}
-
-type GroupInfo struct {
-	Group string
-}
-
-func (g *GroupInfo) String() string {
-	return fmt.Sprintf("group: %s", g.Group)
-}
-
-type GroupUserInfo struct {
-	Group string
-	Users []string
-}
-
-func (gu *GroupUserInfo) String() string {
-	return fmt.Sprintf("group: %s, users: %v", gu.Group, gu.Users)
 }
