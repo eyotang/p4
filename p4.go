@@ -262,6 +262,15 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		groupUserInfo.Users = users
 		return &groupUserInfo
 
+	case "triggers":
+		var triggers Triggers
+		for k, v := range imap {
+			if strings.HasPrefix(k, "Triggers") {
+				triggers.Lines = append(triggers.Lines, v.(string))
+			}
+		}
+		return &triggers
+
 	default:
 		log.Panicf("unknown code %q", command)
 	}
