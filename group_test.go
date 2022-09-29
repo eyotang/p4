@@ -13,6 +13,7 @@ func TestGroup_Groups(t *testing.T) {
 		group   = "group-xxx"
 		users   = []string{"eyotang", "tangyongqiang"}
 		other   = []string{"abc"}
+		owners  = []string{"owner"}
 	)
 	conn, err := setup(t)
 	Convey("test Group functions", t, func() {
@@ -29,19 +30,19 @@ func TestGroup_Groups(t *testing.T) {
 		})
 
 		Convey("Create group", func() {
-			message, err = conn.CreateGroup(group, users)
+			message, err = conn.CreateGroup(group, owners, users)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Group %s created.", group))
 		})
 
 		Convey("Add user to group", func() {
-			message, err = conn.AddGroupUsers(group, other)
+			message, err = conn.AddGroupUsers(group, owners, other)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Group %s updated.", group))
 		})
 
 		Convey("Remove user from group", func() {
-			message, err = conn.RemoveGroupUsers(group, other)
+			message, err = conn.RemoveGroupUsers(group, owners, other)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Group %s updated.", group))
 		})

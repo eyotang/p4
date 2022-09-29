@@ -12,6 +12,7 @@ import (
 
 type GroupUserInfo struct {
 	Group     string
+	Owners    []string
 	Users     []string
 	Timestamp string
 }
@@ -84,7 +85,9 @@ PasswordTimeout:        unlimited
 Subgroups:
 
 Owners:
-
+{{- range .Owners }}
+	{{.}}
+{{- end }}
 Users:
 {{- range .Users }}
 	{{.}}
@@ -92,12 +95,13 @@ Users:
 `
 
 // 需要较高权限
-func (conn *Conn) CreateGroup(group string, members []string) (message string, err error) {
+func (conn *Conn) CreateGroup(group string, owners, members []string) (message string, err error) {
 	var (
 		out        []byte
 		contentBuf = bytes.NewBuffer(nil)
 		groupInfo  = GroupUserInfo{
 			Group:     group,
+			Owners:    owners,
 			Users:     members,
 			Timestamp: time.Now().Format("2006-01-02_15-04-05"),
 		}
@@ -124,7 +128,7 @@ func (conn *Conn) DeleteGroup(group string) (message string, err error) {
 	return
 }
 
-func (conn *Conn) AddGroupUsers(group string, addMembers []string) (message string, err error) {
+func (conn *Conn) AddGroupUsers(group string, owners, addMembers []string) (message string, err error) {
 	var (
 		yes     bool
 		members []string
@@ -137,10 +141,10 @@ func (conn *Conn) AddGroupUsers(group string, addMembers []string) (message stri
 		}
 	}
 	members = append(members, addMembers...)
-	return conn.CreateGroup(group, members)
+	return conn.CreateGroup(group, owners, members)
 }
 
-func (conn *Conn) RemoveGroupUsers(group string, removeMembers []string) (message string, err error) {
+func (conn *Conn) RemoveGroupUsers(group string, owners, removeMembers []string) (message string, err error) {
 	var (
 		yes                 bool
 		members, newMembers []string
@@ -166,5 +170,5 @@ func (conn *Conn) RemoveGroupUsers(group string, removeMembers []string) (messag
 			newMembers = append(newMembers, v)
 		}
 	}
-	return conn.CreateGroup(group, newMembers)
+	return conn.CreateGroup(group, owners, newMembers)
 }
