@@ -271,6 +271,15 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		}
 		return &triggers
 
+	case "protect":
+		var acl ACL
+		for k, v := range imap {
+			if strings.HasPrefix(k, "Protections") {
+				acl.List = append(acl.List, newPermission(v.(string)))
+			}
+		}
+		return &acl
+
 	default:
 		log.Panicf("unknown code %q", command)
 	}
