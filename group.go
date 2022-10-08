@@ -106,7 +106,9 @@ MaxOpenFiles:   unset
 Timeout:        unlimited
 PasswordTimeout:        unlimited
 Subgroups:
-
+{{- range .SubGroups }}
+	{{.}}
+{{- end }}
 Owners:
 {{- range .Owners }}
 	{{.}}
