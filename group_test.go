@@ -9,11 +9,12 @@ import (
 
 func TestGroup_Groups(t *testing.T) {
 	var (
-		message string
-		group   = "group-xxx"
-		users   = []string{"eyotang", "tangyongqiang"}
-		other   = []string{"abc"}
-		owners  = []string{"owner"}
+		message   string
+		group     = "group-xxx"
+		subGroups = []string{"eyotang2"}
+		users     = []string{"eyotang", "tangyongqiang"}
+		other     = []string{"abc"}
+		owners    = []string{"owner"}
 	)
 	conn, err := setup(t)
 	Convey("test Group functions", t, func() {
@@ -30,7 +31,7 @@ func TestGroup_Groups(t *testing.T) {
 		})
 
 		Convey("Create group", func() {
-			message, err = conn.CreateGroup(group, owners, users)
+			message, err = conn.CreateGroup(group, owners, subGroups, users)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Group %s created.", group))
 		})

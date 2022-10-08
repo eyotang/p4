@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"runtime"
 	"strings"
 	"text/template"
@@ -13,6 +14,7 @@ import (
 type GroupUserInfo struct {
 	Group     string
 	Owners    []string
+	SubGroups []string
 	Users     []string
 	Timestamp string
 }
@@ -55,6 +57,26 @@ func (conn *Conn) GroupUsers(group string) (members []string, err error) {
 	members = groupInfo.Users
 	return
 }
+func (conn *Conn) GroupSubGroups(group string) (subGroups []string, err error) {
+	var (
+		result    []Result
+		groupInfo *GroupUserInfo
+	)
+	if runtime.GOOS == "windows" {
+		conn.env = append(conn.env, "P4CHARSET=cp936")
+	}
+	if result, err = conn.RunMarshaled("group", []string{"-o", group}); err != nil {
+		return
+	}
+	if len(result) == 0 {
+		return
+	}
+	if groupInfo, _ = result[0].(*GroupUserInfo); groupInfo == nil {
+		return
+	}
+	subGroups = groupInfo.SubGroups
+	return
+}
 
 func (conn *Conn) ExistGroup(group string) (yes bool, err error) {
 	var (
@@ -95,13 +117,14 @@ Users:
 `
 
 // 需要较高权限
-func (conn *Conn) CreateGroup(group string, owners, members []string) (message string, err error) {
+func (conn *Conn) CreateGroup(group string, owners, subGroups, members []string) (message string, err error) {
 	var (
 		out        []byte
 		contentBuf = bytes.NewBuffer(nil)
 		groupInfo  = GroupUserInfo{
 			Group:     group,
 			Owners:    owners,
+			SubGroups: subGroups,
 			Users:     members,
 			Timestamp: time.Now().Format("2006-01-02_15-04-05"),
 		}
@@ -130,24 +153,33 @@ func (conn *Conn) DeleteGroup(group string) (message string, err error) {
 
 func (conn *Conn) AddGroupUsers(group string, owners, addMembers []string) (message string, err error) {
 	var (
-		yes     bool
-		members []string
+		yes       bool
+		members   []string
+		subGroups []string
 	)
 	if yes, err = conn.ExistGroup(group); err != nil {
 		return
-	} else if yes {
+	} else if !yes {
+		err = errors.Errorf("Group '%s' isn't exist!", group)
+		return
+	} else {
 		if members, err = conn.GroupUsers(group); err != nil {
 			return
 		}
+		if subGroups, err = conn.GroupSubGroups(group); err != nil {
+			return
+		}
 	}
+
 	members = append(members, addMembers...)
-	return conn.CreateGroup(group, owners, members)
+	return conn.CreateGroup(group, owners, subGroups, members)
 }
 
 func (conn *Conn) RemoveGroupUsers(group string, owners, removeMembers []string) (message string, err error) {
 	var (
 		yes                 bool
 		members, newMembers []string
+		subGroups           []string
 	)
 	if yes, err = conn.ExistGroup(group); err != nil {
 		return
@@ -156,6 +188,9 @@ func (conn *Conn) RemoveGroupUsers(group string, owners, removeMembers []string)
 		return
 	}
 	if members, err = conn.GroupUsers(group); err != nil {
+		return
+	}
+	if subGroups, err = conn.GroupSubGroups(group); err != nil {
 		return
 	}
 	for _, v := range members {
@@ -170,5 +205,5 @@ func (conn *Conn) RemoveGroupUsers(group string, owners, removeMembers []string)
 			newMembers = append(newMembers, v)
 		}
 	}
-	return conn.CreateGroup(group, owners, newMembers)
+	return conn.CreateGroup(group, owners, subGroups, newMembers)
 }
