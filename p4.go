@@ -278,10 +278,42 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		return &triggers
 
 	case "protect":
-		var acl ACL
+		var (
+			ok         bool
+			err        error
+			idx        int
+			permission *Permission
+			acl        = ACL{
+				store: make(map[int]*Permission),
+			}
+		)
 		for k, v := range imap {
-			if strings.HasPrefix(k, "Protections") {
-				acl.List = append(acl.List, newPermission(v.(string)))
+			if strings.HasPrefix(k, "ProtectionsComment") && len(v.(string)) > 0 {
+				suffix := strings.TrimPrefix(k, "ProtectionsComment")
+				if idx, err = strconv.Atoi(suffix); err != nil {
+					continue
+				}
+				if permission, ok = acl.store[idx]; !ok {
+					if err, permission = newComment(v.(string)); err != nil {
+						continue
+					}
+					acl.store[idx] = permission
+				} else {
+					permission.updateComment(v.(string))
+				}
+			} else if strings.HasPrefix(k, "Protections") && len(v.(string)) > 0 {
+				suffix := strings.TrimPrefix(k, "Protections")
+				if idx, err = strconv.Atoi(suffix); err != nil {
+					continue
+				}
+				if permission, ok = acl.store[idx]; !ok {
+					if err, permission = newPermission(v.(string)); err != nil {
+						continue
+					}
+					acl.store[idx] = permission
+				} else {
+					permission.updatePermit(v.(string))
+				}
 			}
 		}
 		return &acl

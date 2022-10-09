@@ -10,8 +10,8 @@ func TestProtections_Protections(t *testing.T) {
 	var (
 		currentACL *ACL
 		newACL     = &ACL{List: []*Permission{
-			{"super", false, "root", "*", "//..."},
-			{"write", true, "eyotang", "*", "//main/..."},
+			{"super", false, "root", "*", "//...", "更新于: 2022-10-09 11:17, 更新人: tangyongqiang, 描述: 评审控制"},
+			{"write", true, "eyotang", "*", "//main/...", ""},
 		}}
 	)
 	conn, err := setup(t)

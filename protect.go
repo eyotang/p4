@@ -3,6 +3,7 @@ package p4
 import (
 	"bytes"
 	"github.com/pkg/errors"
+	"sort"
 	"strings"
 	"text/template"
 )
@@ -18,10 +19,12 @@ type Permission struct {
 	Name    string `json:"name"`
 	Host    string `json:"host"`
 	Path    string `json:"path"`
+	Comment string `json:"comment"`
 }
 
 type ACL struct {
-	List []*Permission
+	store map[int]*Permission
+	List  []*Permission
 }
 
 func (p *ACL) String() string {
@@ -37,23 +40,55 @@ func (p *ACL) String() string {
 	return contentBuf.String()
 }
 
-func newPermission(line string) *Permission {
+func newPermission(line string) (err error, p *Permission) {
+	p = new(Permission)
+	if err = p.updatePermit(line); err != nil {
+		return
+	}
+	return
+}
+
+func newComment(line string) (err error, p *Permission) {
+	p = new(Permission)
+	if err = p.updateComment(line); err != nil {
+		return
+	}
+	return
+}
+
+func (permission *Permission) updatePermit(line string) (err error) {
 	line = strings.TrimSpace(line)
 	fields := strings.Split(line, " ")
 	if len(fields) != 5 {
-		return nil
+		err = errors.New("Invalid format")
+		return
 	}
 	isGroup := true
 	if fields[1] == _user {
 		isGroup = false
 	}
-	return &Permission{
-		Mode:    fields[0],
-		IsGroup: isGroup,
-		Name:    fields[2],
-		Host:    fields[3],
-		Path:    fields[4],
+	permission.Mode = fields[0]
+	permission.IsGroup = isGroup
+	permission.Name = fields[2]
+	permission.Host = fields[3]
+	permission.Path = fields[4]
+	return
+}
+
+func (permission *Permission) updateComment(line string) (err error) {
+	if len(line) <= 0 {
+		err = errors.New("Comment is empty")
+		return
 	}
+	comment := strings.TrimSpace(line)
+	if !strings.HasPrefix(comment, "##") {
+		err = errors.New("Comment format invalid")
+		return
+	}
+	comment = strings.TrimPrefix(comment, "##")
+	comment = strings.TrimSpace(comment)
+	permission.Comment = comment
+	return
 }
 
 var (
@@ -61,7 +96,7 @@ var (
 )
 var _protectionsTemplateTxt = `Protections:
 {{- range .List }}
-	{{.Mode}} {{if .IsGroup}} group {{else}} user {{end}} {{.Name}} {{.Host}} {{.Path}}
+	{{.Mode}} {{if .IsGroup}} group {{else}} user {{end}} {{.Name}} {{.Host}} {{.Path}}{{if .Comment}} ## {{.Comment}} {{end}}
 {{- end }}`
 
 func (conn *Conn) WriteProtections(acl *ACL) (out []byte, err error) {
@@ -74,7 +109,10 @@ func (conn *Conn) WriteProtections(acl *ACL) (out []byte, err error) {
 }
 
 func (conn *Conn) Protections() (acl *ACL, err error) {
-	var result []Result
+	var (
+		keys   []int
+		result []Result
+	)
 	if result, err = conn.RunMarshaled("protect", []string{"-o"}); err != nil {
 		return
 	}
@@ -84,6 +122,14 @@ func (conn *Conn) Protections() (acl *ACL, err error) {
 	if acl, _ = result[0].(*ACL); acl == nil {
 		err = errors.New("Type not match")
 		return
+	}
+
+	for k := range acl.store {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	for _, k := range keys {
+		acl.List = append(acl.List, acl.store[k])
 	}
 	return
 }
