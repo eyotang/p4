@@ -55,3 +55,34 @@ func TestGroup_Groups(t *testing.T) {
 		})
 	})
 }
+
+func TestGroup_GroupsRead(t *testing.T) {
+	var (
+		user  = "lejiajun"
+		owner = "feihonghui"
+	)
+	conn, err := setup(t)
+	Convey("test Group functions", t, func() {
+		So(err, ShouldBeNil)
+
+		Convey("List my groups", func() {
+			var (
+				groups []string
+			)
+
+			groups, err = conn.GroupsBelong(user)
+			So(err, ShouldBeNil)
+			So(len(groups), ShouldBeGreaterThanOrEqualTo, 0)
+		})
+
+		Convey("List owned groups", func() {
+			var (
+				groups []string
+			)
+
+			groups, err = conn.GroupsOwned(owner)
+			So(err, ShouldBeNil)
+			So(len(groups), ShouldBeGreaterThanOrEqualTo, 0)
+		})
+	})
+}
