@@ -65,6 +65,15 @@ func TestGroup_GroupsRead(t *testing.T) {
 	Convey("test Group functions", t, func() {
 		So(err, ShouldBeNil)
 
+		Convey("Display group", func() {
+			var (
+				group *GroupInfo
+			)
+			group, err = conn.GroupInfo("swarm-group")
+			So(err, ShouldBeNil)
+			So(len(group.Users), ShouldBeGreaterThanOrEqualTo, 0)
+		})
+
 		Convey("List my groups", func() {
 			var (
 				groups []string

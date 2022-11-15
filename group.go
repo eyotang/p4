@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GroupUserInfo struct {
+type GroupInfo struct {
 	Group     string
 	Owners    []string
 	SubGroups []string
@@ -20,7 +20,7 @@ type GroupUserInfo struct {
 	Timestamp string
 }
 
-func (gu *GroupUserInfo) String() string {
+func (gu *GroupInfo) String() string {
 	return fmt.Sprintf("group: %s, users: %v", gu.Group, gu.Users)
 }
 
@@ -67,10 +67,9 @@ func (conn *Conn) GroupsOwned(user string) (result []string, err error) {
 	return
 }
 
-func (conn *Conn) GroupUsers(group string) (members []string, err error) {
+func (conn *Conn) GroupInfo(group string) (groupInfo *GroupInfo, err error) {
 	var (
-		result    []Result
-		groupInfo *GroupUserInfo
+		result []Result
 	)
 	if runtime.GOOS == "windows" {
 		conn.env = append(conn.env, "P4CHARSET=cp936")
@@ -81,16 +80,58 @@ func (conn *Conn) GroupUsers(group string) (members []string, err error) {
 	if len(result) == 0 {
 		return
 	}
-	if groupInfo, _ = result[0].(*GroupUserInfo); groupInfo == nil {
+	if groupInfo, _ = result[0].(*GroupInfo); groupInfo == nil {
+		return
+	}
+	return
+}
+
+func (conn *Conn) GroupOwners(group string) (owners []string, err error) {
+	var (
+		result    []Result
+		groupInfo *GroupInfo
+	)
+	if runtime.GOOS == "windows" {
+		conn.env = append(conn.env, "P4CHARSET=cp936")
+	}
+	if result, err = conn.RunMarshaled("group", []string{"-o", group}); err != nil {
+		return
+	}
+	if len(result) == 0 {
+		return
+	}
+	if groupInfo, _ = result[0].(*GroupInfo); groupInfo == nil {
+		return
+	}
+	owners = groupInfo.Owners
+	return
+}
+
+func (conn *Conn) GroupUsers(group string) (members []string, err error) {
+	var (
+		result    []Result
+		groupInfo *GroupInfo
+	)
+	if runtime.GOOS == "windows" {
+		conn.env = append(conn.env, "P4CHARSET=cp936")
+	}
+	if result, err = conn.RunMarshaled("group", []string{"-o", group}); err != nil {
+		return
+	}
+	if len(result) == 0 {
+		return
+	}
+	if groupInfo, _ = result[0].(*GroupInfo); groupInfo == nil {
 		return
 	}
 	members = groupInfo.Users
 	return
 }
+
 func (conn *Conn) GroupSubGroups(group string) (subGroups []string, err error) {
 	var (
 		result    []Result
-		groupInfo *GroupUserInfo
+		groupInfo *GroupInfo
 	)
 	if runtime.GOOS == "windows" {
 		conn.env = append(conn.env, "P4CHARSET=cp936")
@@ -101,7 +142,7 @@ func (conn *Conn) GroupSubGroups(group string) (subGroups []string, err error) {
 	if len(result) == 0 {
 		return
 	}
-	if groupInfo, _ = result[0].(*GroupUserInfo); groupInfo == nil {
+	if groupInfo, _ = result[0].(*GroupInfo); groupInfo == nil {
 		return
 	}
 	subGroups = groupInfo.SubGroups
@@ -153,7 +194,7 @@ func (conn *Conn) CreateGroup(group string, owners, subGroups, members []string)
 	var (
 		out        []byte
 		contentBuf = bytes.NewBuffer(nil)
-		groupInfo  = GroupUserInfo{
+		groupInfo  = GroupInfo{
 			Group:     group,
 			Owners:    owners,
 			SubGroups: subGroups,

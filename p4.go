@@ -251,19 +251,23 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 
 	case "group":
 		var (
+			owners    []string
 			users     []string
 			subGroups []string
 		)
-		groupUserInfo := GroupUserInfo{
+		groupUserInfo := GroupInfo{
 			Group: imap["Group"].(string),
 		}
 		for k, v := range imap {
 			if strings.HasPrefix(k, "Users") {
 				users = append(users, v.(string))
+			} else if strings.HasPrefix(k, "Owners") {
+				owners = append(owners, v.(string))
 			} else if strings.HasPrefix(k, "Subgroups") {
 				subGroups = append(subGroups, v.(string))
 			}
 		}
+		groupUserInfo.Owners = owners
 		groupUserInfo.Users = users
 		groupUserInfo.SubGroups = subGroups
 		return &groupUserInfo
@@ -324,7 +328,7 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 	return nil
 }
 
-////////////////
+// //////////////
 type Result interface {
 	String() string
 }
