@@ -24,7 +24,7 @@ func (gu *GroupInfo) String() string {
 	return fmt.Sprintf("group: %s, users: %v", gu.Group, gu.Users)
 }
 
-// P4Admin
+// Groups P4Admin
 // P4 用户组
 func (conn *Conn) Groups() (result []string, err error) {
 	var out []byte
@@ -39,24 +39,10 @@ func (conn *Conn) Groups() (result []string, err error) {
 	return
 }
 
-// 用户属于的组，作为成员Member
+// GroupsBelong 用户属于的组，作为成员Member
 func (conn *Conn) GroupsBelong(user string) (result []string, err error) {
 	var out []byte
 	if out, err = conn.Output([]string{"groups", "-u", user}); err != nil {
-		return
-	}
-	r := bytes.NewBuffer(out)
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		result = append(result, scanner.Text())
-	}
-	return
-}
-
-// 用户拥有的组，作为拥有者Owner
-func (conn *Conn) GroupsOwned(user string) (result []string, err error) {
-	var out []byte
-	if out, err = conn.Output([]string{"groups", "-o", user}); err != nil {
 		return
 	}
 	r := bytes.NewBuffer(out)
@@ -82,6 +68,20 @@ func (conn *Conn) GroupInfo(group string) (groupInfo *GroupInfo, err error) {
 	}
 	if groupInfo, _ = result[0].(*GroupInfo); groupInfo == nil {
 		return
+	}
+	return
+}
+
+// GroupsOwned 用户拥有的组，作为拥有者Owner
+func (conn *Conn) GroupsOwned(user string) (result []string, err error) {
+	var out []byte
+	if out, err = conn.Output([]string{"groups", "-o", user}); err != nil {
+		return
+	}
+	r := bytes.NewBuffer(out)
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		result = append(result, scanner.Text())
 	}
 	return
 }
