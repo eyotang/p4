@@ -167,8 +167,6 @@ func (conn *Conn) ExistGroup(group string) (yes bool, err error) {
 
 var _groupTemplate = template.New("group template")
 var _groupTemplateTxt = `Group:  {{ .Group }}
-Description:
-	Auto generated at {{ .Timestamp }}.
 MaxResults:     unset
 MaxScanRows:    unset
 MaxLockTime:    unset
