@@ -26,6 +26,7 @@ type ConnOptions struct {
 	binary   string
 	username string
 	password string
+	client   string
 }
 
 type Conn struct {
@@ -34,6 +35,10 @@ type Conn struct {
 }
 
 func NewConn(address, username, password string) (conn *Conn, err error) {
+	return NewClientConn(address, username, password, "")
+}
+
+func NewClientConn(address, username, password, client string) (conn *Conn, err error) {
 	conn = &Conn{
 		ConnOptions: ConnOptions{
 			binary:   "p4",
@@ -41,6 +46,9 @@ func NewConn(address, username, password string) (conn *Conn, err error) {
 			username: username,
 			password: password,
 		}}
+	if client != "" {
+		conn.client = client
+	}
 	if err = conn.Login(); err != nil {
 		return
 	}
@@ -51,9 +59,11 @@ var tokenRegexp = regexp.MustCompile("([0-9A-Z]{32})")
 
 func (conn *Conn) Login() (err error) {
 	env := []string{
-		//"P4CLIENT=" + conn.Client,
 		"P4PORT=" + conn.address,
 		"P4USER=" + conn.username,
+	}
+	if conn.client != "" {
+		env = append(env, "P4CLIENT="+conn.client)
 	}
 	if runtime.GOOS == "windows" {
 		home := os.Getenv("USERPROFILE")
