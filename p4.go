@@ -332,6 +332,17 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		}
 		return &acl
 
+	case "streams":
+		stream := StreamInfo{
+			Stream:  imap["Stream"].(string),
+			Owner:   imap["Owner"].(string),
+			Name:    imap["Name"].(string),
+			Parent:  imap["Parent"].(string),
+			Type:    imap["Type"].(string),
+			Options: imap["Options"].(string),
+		}
+		return &stream
+
 	default:
 		log.Panicf("unknown code %q", command)
 	}
