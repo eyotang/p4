@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"strings"
 	"text/template"
+
+	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 )
 
 type StreamInfo struct {
@@ -56,6 +59,8 @@ Paths:
         share ...
 `
 
+var _streamTypes []string
+
 func (conn *Conn) CreateStream(name, streamType, parent, location string, populate bool) (message string, err error) {
 	var (
 		out        []byte
@@ -69,6 +74,10 @@ func (conn *Conn) CreateStream(name, streamType, parent, location string, popula
 			Options: "allsubmit unlocked toparent fromparent mergedown",
 		}
 	)
+	if !slices.Contains(_streamTypes, streamType) {
+		err = errors.Errorf("streamType should be one of the following '%s'", strings.Join(_streamTypes, "', '"))
+		return
+	}
 	if _, err = _streamTemplate.Parse(_streamTemplateTxt); err != nil {
 		return
 	}
@@ -87,11 +96,20 @@ func (conn *Conn) CreateStream(name, streamType, parent, location string, popula
 	return
 }
 
-func (conn *Conn) DeleteStream(location string) (message string, err error) {
+func (conn *Conn) DeleteStream(location string, prune bool) (message string, err error) {
 	var out []byte
+	if prune {
+		if _, err = conn.Prune(location); err != nil {
+			return
+		}
+	}
 	if out, err = conn.Output([]string{"stream", "-d", location}); err != nil {
 		return
 	}
 	message = strings.TrimSpace(string(out))
 	return
+}
+
+func init() {
+	_streamTypes = []string{"mainline", "development", "release", "virtual", "task"}
 }

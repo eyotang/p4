@@ -23,7 +23,7 @@ func TestStream_Streams(t *testing.T) {
 		})
 
 		Convey("Delete stream", func() {
-			message, err := conn.DeleteStream(stream)
+			message, err := conn.DeleteStream(stream, true)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Stream %s deleted.", stream))
 		})
@@ -37,6 +37,16 @@ func TestStream_Streams(t *testing.T) {
 			message, err := conn.CreateStream(name, streamType, parent, stream, true)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Stream %s saved.", stream))
+		})
+
+		Convey("Create stream with invalid stream type", func() {
+			var (
+				name       = "ZGame_ArtDev"
+				parent     = "//DM99.ZGame.Project/Main/ZGame_Mainline"
+				streamType = "abc"
+			)
+			_, err := conn.CreateStream(name, streamType, parent, stream, true)
+			So(err, ShouldNotBeNil)
 		})
 	})
 }
