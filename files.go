@@ -14,6 +14,21 @@ func (f *File) String() string {
 	return f.DepotFile
 }
 
-func (conn *Conn) Files(paths []string) (results []Result, err error) {
-	return conn.RunMarshaled("files", paths)
+func (conn *Conn) Files(paths []string) (files []*File, err error) {
+	var (
+		results []Result
+	)
+	if results, err = conn.RunMarshaled("files", paths); err != nil {
+		return
+	}
+	for idx := range results {
+		if file, ok := results[idx].(*File); !ok {
+			continue
+		} else if file.Action == "delete" {
+			continue
+		} else {
+			files = append(files, file)
+		}
+	}
+	return
 }
