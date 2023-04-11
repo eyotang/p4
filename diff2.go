@@ -7,13 +7,13 @@ import (
 
 type DiffFile struct {
 	DepotFile string `json:"depotFile"`
-	Revision  uint64 `json:"revision"`
-	Type      string `json:"type"` // binary+l
+	Revision  uint64 `json:"revision"` // content时，版本会不一致
+	Type      string `json:"type"`     // text,binary+l
 }
 
 type Diff2 struct {
-	Code      string    `json:"code"`
-	Status    string    `json:"status"`
+	Code      string    `json:"code"`   // stat
+	Status    string    `json:"status"` // identical(一致), content(有差异)
 	DiffFile1 *DiffFile `json:"diffFile1"`
 	DiffFile2 *DiffFile `json:"diffFile2"`
 }
