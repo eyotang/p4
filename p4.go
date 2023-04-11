@@ -343,6 +343,29 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		}
 		return &stream
 
+	case "diff2":
+		r := map[string]string{}
+		for k, v := range imap {
+			r[k] = v.(string)
+		}
+		v1, _ := strconv.ParseUint(r["rev"], 10, 64)
+		v2, _ := strconv.ParseUint(r["rev2"], 10, 64)
+		diff := Diff2{
+			Code:   r["code"],
+			Status: r["status"],
+			DiffFile1: &DiffFile{
+				DepotFile: r["depotFile"],
+				Revision:  v1,
+				Type:      r["type"],
+			},
+			DiffFile2: &DiffFile{
+				DepotFile: r["depotFile2"],
+				Revision:  v2,
+				Type:      r["type2"],
+			},
+		}
+		return &diff
+
 	default:
 		log.Panicf("unknown code %q", command)
 	}
