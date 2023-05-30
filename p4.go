@@ -332,7 +332,7 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		}
 		return &acl
 
-	case "streams":
+	case "stream", "streams":
 		stream := StreamInfo{
 			Stream:  imap["Stream"].(string),
 			Owner:   imap["Owner"].(string),

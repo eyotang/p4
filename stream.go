@@ -44,6 +44,24 @@ func (conn *Conn) Streams() (list []*StreamInfo, err error) {
 	return
 }
 
+// Stream 入参：stream路径
+func (conn *Conn) Stream(location string) (stream *StreamInfo, err error) {
+	var (
+		ok     bool
+		result []Result
+	)
+	if result, err = conn.RunMarshaled("stream", []string{"-o", location}); err != nil {
+		return
+	}
+	if len(result) == 0 {
+		return
+	}
+	if stream, ok = result[0].(*StreamInfo); !ok {
+		return
+	}
+	return
+}
+
 var _streamTemplate = template.New("stream template")
 var _streamTemplateTxt = `Stream:  {{ .Stream }}
 Owner:        {{ .Owner }}

@@ -9,6 +9,7 @@ import (
 
 func TestStream_Streams(t *testing.T) {
 	var (
+		si      *StreamInfo
 		streams []*StreamInfo
 		stream  = "//DM99.ZGame.Project/Development/ZGame_ArtDev"
 	)
@@ -20,6 +21,12 @@ func TestStream_Streams(t *testing.T) {
 			streams, err = conn.Streams()
 			So(err, ShouldBeNil)
 			So(len(streams), ShouldBeGreaterThanOrEqualTo, 0)
+		})
+
+		Convey("Get stream info", func() {
+			si, err = conn.Stream(stream)
+			So(err, ShouldBeNil)
+			So(si.Stream, ShouldEqual, stream)
 		})
 
 		Convey("Delete stream", func() {
