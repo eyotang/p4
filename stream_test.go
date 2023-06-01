@@ -29,6 +29,11 @@ func TestStream_Streams(t *testing.T) {
 			So(si.Stream, ShouldEqual, stream)
 		})
 
+		Convey("Get non-exist stream info", func() {
+			si, err = conn.Stream(stream + "/abc")
+			So(err, ShouldNotBeNil)
+		})
+
 		Convey("Delete stream", func() {
 			message, err := conn.DeleteStream(stream, true)
 			So(err, ShouldBeNil)

@@ -50,10 +50,11 @@ func (conn *Conn) Stream(location string) (stream *StreamInfo, err error) {
 		ok     bool
 		result []Result
 	)
-	if result, err = conn.RunMarshaled("stream", []string{"-o", location}); err != nil {
+	if result, err = conn.RunMarshaled("streams", []string{location}); err != nil {
 		return
 	}
 	if len(result) == 0 {
+		err = errors.Errorf("%s - no such stream.", location)
 		return
 	}
 	if stream, ok = result[0].(*StreamInfo); !ok {

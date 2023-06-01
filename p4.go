@@ -160,13 +160,16 @@ func (conn *Conn) Input(args []string, input []byte) (out []byte, err error) {
 
 // Runs p4 with -G and captures the result lines.
 func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, err error) {
-	var out []byte
+	var (
+		v   interface{}
+		out []byte
+	)
 	if out, err = conn.Output(append([]string{"-G", command}, args...)); err != nil {
 		return
 	}
 	r := bytes.NewBuffer(out)
 	for {
-		v, err := Decode(r)
+		v, err = Decode(r)
 		if err == io.EOF {
 			break
 		}
@@ -177,7 +180,12 @@ func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, 
 		if !ok {
 			return nil, fmt.Errorf("format err: p4 marshaled %v", v)
 		}
-		result = append(result, interpretResult(asMap, command))
+		item := interpretResult(asMap, command)
+		if err2, ok := item.(*Error); ok {
+			err = err2
+			return
+		}
+		result = append(result, item)
 	}
 
 	if len(result) > 0 {
@@ -385,4 +393,8 @@ type Error struct {
 
 func (e *Error) String() string {
 	return fmt.Sprintf("error %d(%d): %s", e.Generic, e.Severity, e.Data)
+}
+
+func (e *Error) Error() string {
+	return e.String()
 }
