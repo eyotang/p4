@@ -84,10 +84,6 @@ var _streamTypes []string
 // mainline分支，parent填空，populate为false
 // 其他有父分支的，populate为true，表示从父分支拷贝项目内容到新分支
 func (conn *Conn) CreateStream(name, streamType, parent, location string, populate bool) (message string, err error) {
-	if streamType == "mainline" {
-		parent = ""
-		populate = false
-	}
 	var (
 		out        []byte
 		contentBuf = bytes.NewBuffer(nil)
@@ -100,6 +96,10 @@ func (conn *Conn) CreateStream(name, streamType, parent, location string, popula
 			Options: "allsubmit unlocked toparent fromparent mergedown",
 		}
 	)
+	if streamType == "mainline" {
+		populate = false
+		streamInfo.Parent = "none"
+	}
 	if !slices.Contains(_streamTypes, streamType) {
 		err = errors.Errorf("streamType should be one of the following '%s'", strings.Join(_streamTypes, "', '"))
 		return
