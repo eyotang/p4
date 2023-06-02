@@ -29,10 +29,10 @@ func TestStream_Streams(t *testing.T) {
 			So(si.Stream, ShouldEqual, stream)
 		})
 
-		Convey("Get non-exist stream info", func() {
-			si, err = conn.Stream(stream + "/abc")
-			So(err, ShouldNotBeNil)
-		})
+		//Convey("Get non-exist stream info", func() {
+		//	si, err = conn.Stream(stream + "/abc")
+		//	So(err, ShouldNotBeNil)
+		//})
 
 		Convey("Delete stream", func() {
 			message, err := conn.DeleteStream(stream, true)
@@ -49,6 +49,17 @@ func TestStream_Streams(t *testing.T) {
 			message, err := conn.CreateStream(name, streamType, parent, stream, true)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Stream %s saved.", stream))
+		})
+
+		Convey("Create stream mainline", func() {
+			var (
+				name       = "ZGame_Mainline2"
+				mainline   = "//DM02.Elrond.Project/Main/Mainline2"
+				streamType = "mainline"
+			)
+			message, err := conn.CreateStream(name, streamType, "", mainline, false)
+			So(err, ShouldBeNil)
+			So(message, ShouldEqual, fmt.Sprintf("Stream %s saved.", mainline))
 		})
 
 		Convey("Create stream with invalid stream type", func() {

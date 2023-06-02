@@ -80,7 +80,14 @@ Paths:
 
 var _streamTypes []string
 
+// CreateStream 创建分支
+// mainline分支，parent填空，populate为false
+// 其他有父分支的，populate为true，表示从父分支拷贝项目内容到新分支
 func (conn *Conn) CreateStream(name, streamType, parent, location string, populate bool) (message string, err error) {
+	if streamType == "mainline" {
+		parent = ""
+		populate = false
+	}
 	var (
 		out        []byte
 		contentBuf = bytes.NewBuffer(nil)
