@@ -150,11 +150,14 @@ func (conn *Conn) DeleteStream(location string, prune bool) (message string, err
 		}
 	}
 
+	// 4. 删除Stream中的所有文件
 	if prune {
 		if _, err = conn.Prune(location); err != nil {
 			return
 		}
 	}
+
+	// 3. 删除Stream Spec
 	if out, err = conn.Output([]string{"stream", "-d", location}); err != nil {
 		return
 	}
