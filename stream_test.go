@@ -73,3 +73,20 @@ func TestStream_Streams(t *testing.T) {
 		})
 	})
 }
+
+func TestStream_DeleteStream(t *testing.T) {
+	var (
+		message string
+		stream  = "//DM99.ZGame.Project/Development/ZGame_June"
+	)
+	conn, err := setup(t)
+	Convey("test DeleteStream functions", t, func() {
+		So(err, ShouldBeNil)
+
+		Convey("Delete stream", func() {
+			message, err = conn.DeleteStream(stream, false)
+			So(err, ShouldBeNil)
+			So(message, ShouldEqual, fmt.Sprintf("Stream %s deleted.", stream))
+		})
+	})
+}

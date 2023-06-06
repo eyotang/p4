@@ -374,8 +374,19 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		}
 		return &diff
 
+	case "clients":
+		client := Client{
+			Owner:       imap["Owner"].(string),
+			Client:      imap["client"].(string),
+			Root:        imap["Root"].(string),
+			Host:        imap["Host"].(string),
+			Stream:      imap["Stream"].(string),
+			Description: imap["Description"].(string),
+		}
+		return &client
+
 	default:
-		log.Panicf("unknown code %q", command)
+		log.Panicf("unknown command %q", command)
 	}
 	return nil
 }

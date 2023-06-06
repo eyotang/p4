@@ -122,8 +122,34 @@ func (conn *Conn) CreateStream(name, streamType, parent, location string, popula
 	return
 }
 
+// DeleteStream prune为true，将删除stream中的文件，慎用!
+// location格式: //Stream_Root
 func (conn *Conn) DeleteStream(location string, prune bool) (message string, err error) {
-	var out []byte
+	var (
+		out     []byte
+		shelved []*Change
+		clients []*Client
+	)
+	// 1. 删除Stream中所有Shelve的文件
+	if shelved, err = conn.Shelved(location + "/..."); err != nil {
+		return
+	}
+	for _, s := range shelved {
+		if _, err = conn.DeleteShelved(location+"/...", s.Change); err != nil {
+			return
+		}
+	}
+
+	// 2. 删除Stream关联的所有Clients
+	if clients, err = conn.Clients(location); err != nil {
+		return
+	}
+	for _, c := range clients {
+		if _, err = conn.DeleteClient(c.Client); err != nil {
+			return
+		}
+	}
+
 	if prune {
 		if _, err = conn.Prune(location); err != nil {
 			return
