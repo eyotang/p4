@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Conn is an interface to the Conn command line client.
+// ConnOptions Conn is an interface to the Conn command line client.
 type ConnOptions struct {
 	address  string
 	binary   string
@@ -158,7 +158,7 @@ func (conn *Conn) Input(args []string, input []byte) (out []byte, err error) {
 	return
 }
 
-// Runs p4 with -G and captures the result lines.
+// RunMarshaled p4 with -G and captures the result lines.
 func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, err error) {
 	var (
 		v   interface{}
@@ -181,10 +181,6 @@ func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, 
 			return nil, fmt.Errorf("format err: p4 marshaled %v", v)
 		}
 		item := interpretResult(asMap, command)
-		if err2, ok := item.(*Error); ok {
-			err = err2
-			return
-		}
 		result = append(result, item)
 	}
 
@@ -391,7 +387,7 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 	return nil
 }
 
-// //////////////
+// Result //////////////
 type Result interface {
 	String() string
 }

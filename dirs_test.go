@@ -21,12 +21,12 @@ func TestDirs(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("List dirs", func() {
-			dirs, err = conn.Dirs([]string{"//DM99.ZGame.Project/Main/ZGame_Mainline/*"})
+			dirs, err = conn.Dirs([]string{"//DM02.Elrond.Project/Development/test2/*"})
 			So(err, ShouldBeNil)
 			So(len(dirs), ShouldBeGreaterThanOrEqualTo, 0)
 		})
 		Convey("List files", func() {
-			files, err = conn.Files([]string{"//DM99.ZGame.Project/Main/ZGame_Mainline/*"})
+			files, err = conn.Files([]string{"//DM02.Elrond.Project/Development/test2/*"})
 			So(err, ShouldBeNil)
 			So(len(files), ShouldBeGreaterThanOrEqualTo, 0)
 		})

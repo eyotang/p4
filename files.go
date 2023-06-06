@@ -1,5 +1,7 @@
 package p4
 
+import "log"
+
 // File has the data for a single file.
 type File struct {
 	Code      string
@@ -23,6 +25,7 @@ func (conn *Conn) Files(paths []string) (files []*File, err error) {
 	}
 	for idx := range results {
 		if file, ok := results[idx].(*File); !ok {
+			log.Printf("type translate err: %s", results[idx])
 			continue
 		} else if file.Action == "delete" {
 			continue
