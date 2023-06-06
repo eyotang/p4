@@ -161,7 +161,6 @@ func (conn *Conn) Input(args []string, input []byte) (out []byte, err error) {
 // RunMarshaled p4 with -G and captures the result lines.
 func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, err error) {
 	var (
-		v   interface{}
 		out []byte
 	)
 	if out, err = conn.Output(append([]string{"-G", command}, args...)); err != nil {
@@ -169,7 +168,7 @@ func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, 
 	}
 	r := bytes.NewBuffer(out)
 	for {
-		v, err = Decode(r)
+		v, err := Decode(r)
 		if err == io.EOF {
 			break
 		}
@@ -180,8 +179,7 @@ func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, 
 		if !ok {
 			return nil, fmt.Errorf("format err: p4 marshaled %v", v)
 		}
-		item := interpretResult(asMap, command)
-		result = append(result, item)
+		result = append(result, interpretResult(asMap, command))
 	}
 
 	if len(result) > 0 {
