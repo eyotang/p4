@@ -105,6 +105,9 @@ func (conn *Conn) CreateStream(name, streamType, parent, location string, popula
 		err = errors.Errorf("streamType should be one of the following '%s'", strings.Join(_streamTypes, "', '"))
 		return
 	}
+	if err = validateLocation(location); err != nil {
+		return
+	}
 	if _, err = _streamTemplate.Parse(_streamTemplateTxt); err != nil {
 		return
 	}
@@ -131,6 +134,9 @@ func (conn *Conn) DeleteStream(location string, prune bool) (message string, err
 		shelved []*Change
 		clients []*Client
 	)
+	if err = validateLocation(location); err != nil {
+		return
+	}
 	// 1. 删除Stream中所有Shelve的文件
 	if shelved, err = conn.Shelved(location + "/..."); err != nil {
 		return
@@ -163,6 +169,22 @@ func (conn *Conn) DeleteStream(location string, prune bool) (message string, err
 		return
 	}
 	message = strings.TrimSpace(string(out))
+	return
+}
+
+func validateLocation(location string) (err error) {
+	if len(location) <= 0 {
+		err = errors.New("仓库路径非法: 不能为空")
+		return
+	}
+	if !strings.HasPrefix(location, "//") {
+		err = errors.Errorf("仓库路径非法: '%s' 没有以 '//' 开头", location)
+		return
+	}
+	if strings.HasSuffix(location, "/...") {
+		err = errors.Errorf("仓库路径非法: '%s' 不能以 '/...' 结尾", location)
+		return
+	}
 	return
 }
 

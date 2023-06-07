@@ -20,6 +20,9 @@ func (conn *Conn) Clients(path string) (clients []*Client, err error) {
 	var (
 		result []Result
 	)
+	if err = validateLocation(path); err != nil {
+		return
+	}
 	if result, err = conn.RunMarshaled("clients", []string{"-S", path}); err != nil {
 		return
 	}
