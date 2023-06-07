@@ -58,6 +58,7 @@ func (conn *Conn) Stream(location string) (stream *StreamInfo, err error) {
 		return
 	}
 	if stream, ok = result[0].(*StreamInfo); !ok {
+		err = errors.Errorf("%s - no such stream.", location)
 		return
 	}
 	return
