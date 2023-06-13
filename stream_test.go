@@ -90,3 +90,29 @@ func TestStream_DeleteStream(t *testing.T) {
 		})
 	})
 }
+
+func TestStream_CreateVirtualStream(t *testing.T) {
+	var (
+		message    string
+		stream     = "//DM99.ZGame.Project/Virtual/ZGame_Virtual"
+		name       = "ZGame_ArtDev"
+		parent     = "//DM99.ZGame.Project/Main/ZGame_Mainline"
+		streamType = "development"
+	)
+	conn, err := setup(t)
+	Convey("test CreateStream functions", t, func() {
+		So(err, ShouldBeNil)
+
+		Convey("Delete stream", func() {
+			message, err = conn.DeleteStream(stream, false)
+			So(err, ShouldBeNil)
+			So(message, ShouldEqual, fmt.Sprintf("Stream %s deleted.", stream))
+		})
+
+		Convey("Create stream", func() {
+			message, err = conn.CreateStream(name, streamType, parent, stream, true)
+			So(err, ShouldBeNil)
+			So(message, ShouldEqual, fmt.Sprintf("Stream %s saved.", stream))
+		})
+	})
+}
