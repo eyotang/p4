@@ -102,6 +102,7 @@ func (conn *Conn) CreateStream(name, streamType, parent, location string, popula
 		streamInfo.Parent = "none"
 	}
 	if streamType == "virtual" {
+		populate = false
 		streamInfo.Options = "allsubmit unlocked notoparent nofromparent mergedown"
 	}
 	if !slices.Contains(_streamTypes, streamType) {
