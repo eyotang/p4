@@ -133,9 +133,10 @@ func (conn *Conn) CreateStream(name, streamType, parent, location string, popula
 // location格式: //Stream_Root
 func (conn *Conn) DeleteStream(location string, prune bool) (message string, err error) {
 	var (
-		out     []byte
-		shelved []*Change
-		clients []*Client
+		out      []byte
+		shelved  []*Change
+		clients  []*Client
+		unloaded []*Client
 	)
 	if err = validateLocation(location); err != nil {
 		return
@@ -159,6 +160,15 @@ func (conn *Conn) DeleteStream(location string, prune bool) (message string, err
 			return
 		}
 	}
+	// 3. 删除Stream关联的所有Unloaded Clients
+	if unloaded, err = conn.UnloadedClients(location); err != nil {
+		return
+	}
+	for _, c := range unloaded {
+		if _, err = conn.DeleteClient(c.Client); err != nil {
+			return
+		}
+	}
 
 	// 4. 删除Stream中的所有文件
 	if prune {
@@ -167,7 +177,7 @@ func (conn *Conn) DeleteStream(location string, prune bool) (message string, err
 		}
 	}
 
-	// 3. 删除Stream Spec
+	// 5. 删除Stream Spec
 	if out, err = conn.Output([]string{"stream", "-d", location}); err != nil {
 		return
 	}
