@@ -215,7 +215,7 @@ func (conn *Conn) CreateGroup(group string, owners, subGroups, members []string)
 
 func (conn *Conn) DeleteGroup(group string) (message string, err error) {
 	var out []byte
-	if out, err = conn.Output([]string{"group", "-dF", "'" + group + "'"}); err != nil {
+	if out, err = conn.Output([]string{"group", "-dF", group}); err != nil {
 		return
 	}
 	message = strings.TrimSpace(string(out))
