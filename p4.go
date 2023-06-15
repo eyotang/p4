@@ -379,6 +379,21 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		}
 		return &client
 
+	case "user", "users":
+		var (
+			authMethod string
+		)
+		if v, exist := imap["AuthMethod"]; exist {
+			authMethod = v.(string)
+		}
+		user := UserInfo{
+			User:       imap["User"].(string),
+			Email:      imap["Email"].(string),
+			FullName:   imap["FullName"].(string),
+			AuthMethod: authMethod,
+		}
+		return &user
+
 	default:
 		log.Panicf("unknown command %q", command)
 	}

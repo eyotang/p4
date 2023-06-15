@@ -187,7 +187,7 @@ Users:
 {{- end }}
 `
 
-// 需要较高权限
+// CreateGroup 需要较高权限
 func (conn *Conn) CreateGroup(group string, owners, subGroups, members []string) (message string, err error) {
 	var (
 		out        []byte
