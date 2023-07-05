@@ -27,7 +27,7 @@ func (conn *Conn) Files(paths []string) (files []*File, err error) {
 		if file, ok := results[idx].(*File); !ok {
 			log.Printf("type translate err: %s", results[idx])
 			continue
-		} else if file.Action == "delete" {
+		} else if file.Action == "delete" || file.Action == "move/delete" || file.Action == "purge" {
 			continue
 		} else {
 			files = append(files, file)
