@@ -57,6 +57,7 @@ func TestStream_Streams(t *testing.T) {
 				mainline   = "//DM02.Elrond.Project/Main/Mainline2"
 				streamType = "mainline"
 			)
+			// allsubmit unlocked toparent fromparent mergedown
 			message, err := conn.CreateStream(name, streamType, "", mainline, false)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Stream %s saved.", mainline))
@@ -104,13 +105,13 @@ func TestStream_CreateVirtualStream(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Delete stream", func() {
-			message, err = conn.DeleteStream(stream, false)
+			message, err = conn.DeleteStream(stream, true)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Stream %s deleted.", stream))
 		})
 
 		Convey("Create stream", func() {
-			message, err = conn.CreateStream(name, streamType, parent, stream, true)
+			message, err = conn.CreateStream(name, streamType, parent, stream, true, WithOptions([]int{AllSubmit, UnLocked, ToParent, FromParent, MergeDown}))
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Stream %s saved.", stream))
 		})

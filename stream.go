@@ -16,8 +16,23 @@ type StreamInfo struct {
 	Name    string
 	Parent  string // steam type为mainline时，parent必须为none，其余类型stream需要填写现有的stream（格式：//depotname/streamname）
 	Type    string // mainline, development, release, virtual, task
-	Options string // allsubmit unlocked notoparent nofromparent mergedown
+	Options string // [all|owner]submit, [un]locked, [no]toparent, [no]fromparent, mergeany|mergedown
 }
+
+const (
+	OwnerSubmit, Locked, ToParent, FromParent, MergeAny      = 0, 0, 0, 0, 0
+	AllSubmit, UnLocked, NoToParent, NoFromParent, MergeDown = 1, 1, 1, 1, 1
+)
+
+var (
+	streamOptsMapping = [][]string{
+		{"ownersubmit", "allsubmit"}, // checked, unchecked
+		{"locked", "unlocked"},
+		{"toparent", "notoparent"},
+		{"fromparent", "nofromparent"},
+		{"mergeany", "mergedown"},
+	}
+)
 
 func (s *StreamInfo) String() string {
 	buf, _ := json.Marshal(s)
@@ -79,12 +94,36 @@ Paths:
         share ...
 `
 
+type StreamOption func(si *StreamInfo) error
+
+// WithOptions [all|owner]submit, [un]locked, [no]toparent, [no]fromparent, mergeany|mergedown
+// A virtual stream must have its flow options set to notoparent and nofromparent.
+// https://www.perforce.com/manuals/cmdref/Content/CmdRef/p4_stream.html#p4_stream
+func WithOptions(options []int) StreamOption {
+	return func(si *StreamInfo) error {
+		if len(options) != len(streamOptsMapping) {
+			return errors.Errorf("options count is invalid, must be '%d'", len(streamOptsMapping))
+		}
+		if si.Type == "virtual" && len(options) > 3 {
+			options[2] = NoToParent
+			options[3] = NoFromParent
+		}
+		var opts []string
+		for idx, o := range options {
+			values := streamOptsMapping[idx]
+			opts = append(opts, values[o])
+		}
+		si.Options = strings.Join(opts, " ")
+		return nil
+	}
+}
+
 var _streamTypes []string
 
 // CreateStream 创建分支
 // mainline分支，parent填空，populate为false
 // 其他有父分支的，populate为true，表示从父分支拷贝项目内容到新分支
-func (conn *Conn) CreateStream(name, streamType, parent, location string, populate bool) (message string, err error) {
+func (conn *Conn) CreateStream(name, streamType, parent, location string, populate bool, options ...StreamOption) (message string, err error) {
 	var (
 		out        []byte
 		contentBuf = bytes.NewBuffer(nil)
@@ -104,6 +143,14 @@ func (conn *Conn) CreateStream(name, streamType, parent, location string, popula
 	if streamType == "virtual" {
 		populate = false
 		streamInfo.Options = "allsubmit unlocked notoparent nofromparent mergedown"
+	}
+	for _, fn := range options {
+		if fn == nil {
+			continue
+		}
+		if err = fn(&streamInfo); err != nil {
+			return
+		}
 	}
 	if !slices.Contains(_streamTypes, streamType) {
 		err = errors.Errorf("streamType should be one of the following '%s'", strings.Join(_streamTypes, "', '"))
