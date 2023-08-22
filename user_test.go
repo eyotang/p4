@@ -59,11 +59,37 @@ func TestUser_DeleteUser(t *testing.T) {
 	Convey("test User delete functions", t, func() {
 		So(err, ShouldBeNil)
 
-		Convey("List users without any group", func() {
+		Convey("Delete users without any group", func() {
 			user := "localauth"
 			message, err := conn.DeleteUser(user)
 			So(err, ShouldBeNil)
 			So(message, ShouldEqual, fmt.Sprintf("Deletion of user %s and all the user's clients initiated.\nUser %s deleted.", user, user))
+		})
+	})
+}
+
+func TestUser_CreateUser(t *testing.T) {
+	conn, err := setup(t)
+	Convey("test User create functions", t, func() {
+		So(err, ShouldBeNil)
+
+		user := "test99"
+
+		Convey("Delete user without any group", func() {
+			_, err := conn.DeleteUser(user)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Create user without any group", func() {
+			userInfo := &UserInfo{
+				User:       user,
+				Email:      "tester99@mail.com",
+				FullName:   "测试用户99",
+				AuthMethod: "ldap",
+			}
+			message, err := conn.CreateUser(userInfo)
+			So(err, ShouldBeNil)
+			So(message, ShouldEqual, fmt.Sprintf("User %s saved.", user))
 		})
 	})
 }

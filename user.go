@@ -1,9 +1,11 @@
 package p4
 
 import (
+	"bytes"
 	"encoding/json"
 	"runtime"
 	"strings"
+	"text/template"
 )
 
 type UserInfo struct {
@@ -66,6 +68,35 @@ func (conn *Conn) User(user string) (info *UserInfo, err error) {
 func (conn *Conn) DeleteUser(user string) (message string, err error) {
 	var out []byte
 	if out, err = conn.Output([]string{"user", "-D", "-F", "-y", user}); err != nil {
+		return
+	}
+	message = strings.TrimSpace(string(out))
+	return
+}
+
+var _userTemplate = template.New("user template")
+var _userTemplateTxt = `User:   {{ .User }}
+Email:  {{ .Email }}
+FullName:       {{ .FullName }}
+AuthMethod:     ldap
+`
+
+// CreateUser 创建标准用户
+func (conn *Conn) CreateUser(info *UserInfo) (message string, err error) {
+	var (
+		out        []byte
+		contentBuf = bytes.NewBuffer(nil)
+	)
+	if info == nil {
+		return
+	}
+	if _, err = _userTemplate.Parse(_userTemplateTxt); err != nil {
+		return
+	}
+	if err = _userTemplate.Execute(contentBuf, info); err != nil {
+		return
+	}
+	if out, err = conn.Input([]string{"user", "-i", "-f"}, contentBuf.Bytes()); err != nil {
 		return
 	}
 	message = strings.TrimSpace(string(out))
