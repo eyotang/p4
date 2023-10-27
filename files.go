@@ -35,3 +35,21 @@ func (conn *Conn) Files(paths []string) (files []*File, err error) {
 	}
 	return
 }
+
+func (conn *Conn) FilesIncludeDeleted(paths []string) (files []*File, err error) {
+	var (
+		results []Result
+	)
+	if results, err = conn.RunMarshaled("files", paths); err != nil {
+		return
+	}
+	for idx := range results {
+		if file, ok := results[idx].(*File); !ok {
+			log.Printf("type translate err: %s", results[idx])
+			continue
+		} else {
+			files = append(files, file)
+		}
+	}
+	return
+}
