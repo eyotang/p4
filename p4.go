@@ -394,6 +394,19 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		}
 		return &user
 
+	case "describe":
+		d := Description{
+			Change:     imap["change"].(string),
+			User:       imap["user"].(string),
+			Describe:   imap["desc"].(string),
+			ChangeType: imap["changeType"].(string),
+			Path:       imap["path"].(string),
+			Time:       imap["time"].(string),
+			Client:     imap["client"].(string),
+			Status:     imap["status"].(string),
+		}
+		return &d
+
 	default:
 		log.Panicf("unknown command %q", command)
 	}
