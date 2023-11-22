@@ -5,6 +5,7 @@
 package p4
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -92,6 +93,37 @@ func (conn *Conn) Login() (err error) {
 	}
 	env = append(env, "P4PASSWD="+tokenRegexp.FindString(token.String()))
 	conn.env = env
+	return
+}
+
+func (conn *Conn) ZtagWithFieldOutput(field string, args []string) (out []byte, err error) {
+	var (
+		stdout bytes.Buffer
+		stderr bytes.Buffer
+	)
+	b := conn.binary
+	if !strings.Contains(b, "/") {
+		b, _ = exec.LookPath(b)
+	}
+	cmd := exec.Cmd{
+		Path:   b,
+		Args:   []string{conn.binary, "-ztag", "-F", field},
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+	if conn.env != nil {
+		cmd.Env = conn.env
+	}
+	if conn.address != "" {
+		cmd.Args = append(cmd.Args, "-p", conn.address)
+	}
+	cmd.Args = append(cmd.Args, args...)
+
+	log.Println("running", cmd.Args)
+	if err = cmd.Run(); err != nil {
+		err = errors.Wrap(err, stderr.String())
+	}
+	out = stdout.Bytes()
 	return
 }
 
@@ -187,6 +219,24 @@ func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, 
 	}
 
 	return result, err
+}
+
+// GetZtagLinesOfField runs p4 with -ztag and -F and captures the result lines. field should be like %key%
+func (conn *Conn) GetZtagLinesOfField(field, command string, args []string) (lines []string, err error) {
+	var (
+		out []byte
+	)
+	if out, err = conn.ZtagWithFieldOutput(field, append([]string{command}, args...)); err != nil {
+		return
+	}
+	r := bufio.NewScanner(bytes.NewBuffer(out))
+	for r.Scan() {
+		lines = append(lines, r.Text())
+	}
+	if err = r.Err(); err != nil {
+		return
+	}
+	return
 }
 
 func interpretResult(in map[interface{}]interface{}, command string) Result {
