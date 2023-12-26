@@ -261,6 +261,25 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		c.Time = int(t)
 		return &c
 
+	case "change":
+		r := map[string]string{}
+		for k, v := range imap {
+			r[k] = v.(string)
+		}
+		cl := ChangeList{
+			Date:        r["Date"],
+			Client:      r["Client"],
+			User:        r["Client"],
+			Status:      r["Status"],
+			Type:        r["Type"],
+			Description: r["Description"],
+			ImportedBy:  r["ImportedBy"],
+			Identity:    r["Identity"],
+			Stream:      r["Stream"],
+		}
+		cl.Change, _ = strconv.Atoi(r["Change"])
+		return &cl
+
 	case "group":
 		var (
 			owners    []string

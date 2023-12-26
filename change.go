@@ -1,8 +1,12 @@
 package p4
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
+	"strconv"
 	"strings"
+	"text/template"
 )
 
 type Change struct {
@@ -45,6 +49,72 @@ func (conn *Conn) Shelved(path string) (shelved []*Change, err error) {
 		} else {
 			shelved = append(shelved, r)
 		}
+	}
+	return
+}
+
+type ChangeList struct {
+	Change      int
+	Date        string
+	Client      string
+	User        string
+	Status      string
+	Type        string
+	Description string
+	ImportedBy  string
+	Identity    string
+	Jobs        []string
+	Stream      string
+	Files       []string
+}
+
+func (cl *ChangeList) String() string {
+	var (
+		contentBuf = bytes.NewBuffer(nil)
+	)
+	if _, err := _changeTemplate.Parse(_changeTemplateTxt); err != nil {
+		return ""
+	}
+	if err := _changeTemplate.Execute(contentBuf, cl); err != nil {
+		return ""
+	}
+	return contentBuf.String()
+}
+
+var (
+	_changeTemplate = template.New("ACL config template")
+)
+var _changeTemplateTxt = `Change: {{.Change}}
+Date: {{.Date}}
+Client: {{.Client}}
+User: {{.User}}
+Status: {{.Status}}
+Type: {{.Type}}
+Description: {{.Description}}
+ImportedBy: {{.ImportedBy}}
+Identity: {{.Identity}}
+Jobs: {{- range .Jobs }}
+        {{.}}
+{{- end }}
+Stream: {{.Stream}}
+Files: {{-range .Files }}
+        {{.}}
+{{- end }}
+`
+
+func (conn *Conn) ChangeList(change int) (cl *ChangeList, err error) {
+	var (
+		result []Result
+	)
+	if result, err = conn.RunMarshaled("change", append([]string{"-o", strconv.Itoa(change)})); err != nil {
+		return
+	}
+	if len(result) == 0 {
+		return
+	}
+	if cl, _ = result[0].(*ChangeList); cl == nil {
+		err = errors.New("Type not match")
+		return
 	}
 	return
 }

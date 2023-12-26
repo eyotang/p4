@@ -27,3 +27,21 @@ func TestChange_Shelved(t *testing.T) {
 		})
 	})
 }
+
+func TestChange_ChangeList(t *testing.T) {
+	var (
+		conn *Conn
+		err  error
+	)
+	conn, err = setup(t)
+	Convey("test change", t, func() {
+		So(err, ShouldBeNil)
+
+		Convey("Display change", func() {
+			change, err := conn.ChangeList(6534)
+			So(change, ShouldNotBeNil)
+			So(change.Type, ShouldEqual, "public")
+			So(err, ShouldBeNil)
+		})
+	})
+}

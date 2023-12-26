@@ -2,10 +2,11 @@ package p4
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
 	"sort"
 	"strings"
 	"text/template"
+
+	"github.com/pkg/errors"
 )
 
 const (
