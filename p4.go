@@ -5,7 +5,9 @@
 package p4
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -155,6 +157,40 @@ func (conn *Conn) Input(args []string, input []byte) (out []byte, err error) {
 		err = errors.Wrap(err, stderr.String())
 	}
 	out = stdout.Bytes()
+	return
+}
+
+var (
+	JSONArgs = []string{"-Mj", "-ztag"}
+)
+
+func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err error) {
+	var (
+		out    []byte
+		line   []byte
+		reader *bufio.Scanner
+	)
+
+	if out, err = conn.Output(append(JSONArgs, args...)); err != nil {
+		return
+	}
+
+	result = make([]map[string]string, 0)
+	reader = bufio.NewScanner(bytes.NewReader(out))
+	for reader.Scan() {
+		line = reader.Bytes()
+		if len(line) <= 0 {
+			continue
+		}
+		r := make(map[string]string)
+		if err = json.Unmarshal(line, &r); err != nil {
+			return
+		}
+		result = append(result, r)
+	}
+	if err = reader.Err(); err != nil {
+		return
+	}
 	return
 }
 
