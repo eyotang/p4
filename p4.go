@@ -450,12 +450,16 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		return &user
 
 	case "describe":
+		var path string
+		if v, ok := imap["path"]; ok {
+			path = v.(string)
+		}
 		d := Description{
 			Change:     imap["change"].(string),
 			User:       imap["user"].(string),
 			Describe:   imap["desc"].(string),
 			ChangeType: imap["changeType"].(string),
-			Path:       imap["path"].(string),
+			Path:       path,
 			Time:       imap["time"].(string),
 			Client:     imap["client"].(string),
 			Status:     imap["status"].(string),
