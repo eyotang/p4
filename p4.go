@@ -97,6 +97,13 @@ func (conn *Conn) Login() (err error) {
 	return
 }
 
+func (conn *Conn) WithClient(client string) *Conn {
+	if client != "" {
+		conn.env = append(conn.env, "P4CLIENT="+client)
+	}
+	return conn
+}
+
 // Output runs p4 and captures stdout.
 func (conn *Conn) Output(args []string) (out []byte, err error) {
 	var (
@@ -291,29 +298,35 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 			ChangeType: r["changeType"],
 			Client:     r["client"],
 		}
-		cl, _ := strconv.ParseInt(r["change"], 10, 64)
-		c.Change = int(cl)
+		cl, _ := strconv.ParseUint(r["change"], 10, 64)
+		c.Change = cl
 		t, _ := strconv.ParseInt(r["time"], 10, 64)
 		c.Time = int(t)
 		return &c
 
 	case "change":
+		var (
+			stream string
+		)
 		r := map[string]string{}
 		for k, v := range imap {
 			r[k] = v.(string)
 		}
+		if v, exist := imap["Stream"]; exist {
+			stream = v.(string)
+		}
 		cl := ChangeList{
 			Date:        r["Date"],
 			Client:      r["Client"],
-			User:        r["Client"],
+			User:        r["User"],
 			Status:      r["Status"],
 			Type:        r["Type"],
 			Description: r["Description"],
 			ImportedBy:  r["ImportedBy"],
 			Identity:    r["Identity"],
-			Stream:      r["Stream"],
+			Stream:      stream,
 		}
-		cl.Change, _ = strconv.Atoi(r["Change"])
+		cl.Change, _ = strconv.ParseUint(r["Change"], 10, 64)
 		return &cl
 
 	case "group":
@@ -431,6 +444,33 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 			Host:        imap["Host"].(string),
 			Stream:      imap["Stream"].(string),
 			Description: imap["Description"].(string),
+		}
+		return &client
+
+	case "client":
+		var (
+			views  []string
+			stream string
+		)
+		for k, v := range imap {
+			if strings.HasPrefix(k, "View") {
+				views = append(views, v.(string))
+			}
+		}
+		if v, exist := imap["Stream"]; exist {
+			stream = v.(string)
+		}
+		client := Client{
+			Client:        imap["Client"].(string),
+			Owner:         imap["Owner"].(string),
+			Host:          imap["Host"].(string),
+			Description:   strings.TrimSpace(imap["Description"].(string)),
+			Root:          imap["Root"].(string),
+			Options:       imap["Options"].(string),
+			SubmitOptions: imap["SubmitOptions"].(string),
+			Stream:        stream,
+			Type:          imap["Type"].(string),
+			View:          views,
 		}
 		return &client
 

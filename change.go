@@ -13,7 +13,7 @@ type Change struct {
 	Desc   string
 	User   string
 	Status string
-	Change int
+	Change uint64
 	Time   int
 
 	Path       string
@@ -54,7 +54,7 @@ func (conn *Conn) Shelved(path string) (shelved []*Change, err error) {
 }
 
 type ChangeList struct {
-	Change      int
+	Change      uint64
 	Date        string
 	Client      string
 	User        string
@@ -82,7 +82,7 @@ func (cl *ChangeList) String() string {
 }
 
 var (
-	_changeTemplate = template.New("ACL config template")
+	_changeTemplate = template.New("change template")
 )
 var _changeTemplateTxt = `Change: {{.Change}}
 Date: {{.Date}}
@@ -97,16 +97,16 @@ Jobs: {{- range .Jobs }}
         {{.}}
 {{- end }}
 Stream: {{.Stream}}
-Files: {{-range .Files }}
+Files: {{- range .Files }}
         {{.}}
 {{- end }}
 `
 
-func (conn *Conn) ChangeList(change int) (cl *ChangeList, err error) {
+func (conn *Conn) ChangeList(change uint64) (cl *ChangeList, err error) {
 	var (
 		result []Result
 	)
-	if result, err = conn.RunMarshaled("change", append([]string{"-o", strconv.Itoa(change)})); err != nil {
+	if result, err = conn.RunMarshaled("change", append([]string{"-o", strconv.FormatUint(change, 10)})); err != nil {
 		return
 	}
 	if len(result) == 0 {
@@ -116,5 +116,51 @@ func (conn *Conn) ChangeList(change int) (cl *ChangeList, err error) {
 		err = errors.New("Type not match")
 		return
 	}
+	return
+}
+
+func (conn *Conn) UpdateChangeList(cl ChangeList) (message string, err error) {
+	var (
+		out        []byte
+		contentBuf = bytes.NewBuffer(nil)
+	)
+	if _, err = _changeTemplate.Parse(_changeTemplateTxt); err != nil {
+		return
+	}
+	if err = _changeTemplate.Execute(contentBuf, cl); err != nil {
+		return
+	}
+	if out, err = conn.Input([]string{"change", "-f", "-i"}, contentBuf.Bytes()); err != nil {
+		return
+	}
+	message = strings.TrimSpace(string(out))
+	return
+}
+
+func (conn *Conn) ChangeListStream(change uint64) (stream string, err error) {
+	var (
+		changeList *ChangeList
+		client     *Client
+	)
+	// 通过CL号，拿到Client（workspace）
+	if changeList, err = conn.ChangeList(change); err != nil {
+		return
+	}
+	if changeList == nil {
+		err = errors.Errorf("change '%d' can NOT found", change)
+		return
+	}
+
+	// 查看Client（workspace）里面配置的stream
+	if client, err = conn.Client(changeList.Client); err != nil {
+		return
+	}
+	if client == nil {
+		err = errors.Errorf("client '%s' for change '%d' can NOT found", changeList.Client, change)
+		return
+	}
+
+	stream = client.Stream
+
 	return
 }

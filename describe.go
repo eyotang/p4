@@ -1,6 +1,9 @@
 package p4
 
-import "log"
+import (
+	"log"
+	"strconv"
+)
 
 // Description has the describe result of a single changelist.
 type Description struct {
@@ -18,11 +21,11 @@ func (d *Description) String() string {
 	return d.Describe
 }
 
-func (conn *Conn) Describe(number string) (desc *Description, err error) {
+func (conn *Conn) Describe(number uint64) (desc *Description, err error) {
 	var (
 		results []Result
 	)
-	if results, err = conn.RunMarshaled("describe", []string{number}); err != nil {
+	if results, err = conn.RunMarshaled("describe", []string{strconv.FormatUint(number, 10)}); err != nil {
 		return
 	}
 	for idx := range results {
