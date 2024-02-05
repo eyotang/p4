@@ -17,3 +17,16 @@ func TestConn_Print2File(t *testing.T) {
 		})
 	})
 }
+
+func TestConn_Print(t *testing.T) {
+	conn, err := setup(t)
+	Convey("test Print functions", t, func() {
+		So(err, ShouldBeNil)
+
+		Convey("Print filename with multi language", func() {
+			out, err := conn.Print("//DM99.ZGame.Project/Development/xiner_test/Data/loc.csv")
+			So(err, ShouldBeNil)
+			So(out, ShouldNotBeNil)
+		})
+	})
+}

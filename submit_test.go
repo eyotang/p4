@@ -52,6 +52,8 @@ func TestSubmit_SubmitShelve(t *testing.T) {
 			}
 			message, err := conn.CreatePartitionClient(clientInfo)
 			So(message, ShouldNotBeEmpty)
+			// Client root_DM99.ZGame.Project-Development-xiner_test saved.
+			So(message, ShouldEqual, fmt.Sprintf("Client %s saved.", client))
 			So(err, ShouldBeNil)
 
 			// 将shelve CL给reshelve成新的shelve CL
