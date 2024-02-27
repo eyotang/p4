@@ -25,3 +25,18 @@ func (conn *Conn) Fstat(paths []string) (results []Result, err error) {
 		append([]string{"-Of", "-Ol"}, paths...))
 	return r, err
 }
+
+func (conn *Conn) FileExist(path string) (yes bool, err error) {
+	var result []Result
+	if result, err = conn.RunMarshaled("fstat", []string{path}); err != nil {
+		return
+	}
+
+	if len(result) > 0 {
+		_, isError := result[0].(*Error)
+		yes = !isError
+		return
+	}
+
+	return
+}
