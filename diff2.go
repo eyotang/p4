@@ -42,10 +42,10 @@ func (conn *Conn) Diff2(myStreamSpec, yourStreamSpec string) (diffs []*Diff2, er
 	return
 }
 
-func (conn *Conn) Diff2Change(myStream string, myChange uint, yourStream string, yourChange uint) ([]*Diff2, error) {
-	return conn.Diff2(myStream+"@"+strconv.FormatUint(uint64(myChange), 10), yourStream+"@"+strconv.FormatUint(uint64(yourChange), 10))
+func (conn *Conn) Diff2Change(myStream string, myChange uint64, yourStream string, yourChange uint64) ([]*Diff2, error) {
+	return conn.Diff2(myStream+"@"+strconv.FormatUint(myChange, 10), yourStream+"@"+strconv.FormatUint(yourChange, 10))
 }
 
-func (conn *Conn) Diff2Shelve(myStream string, myShelve uint, yourStream string, yourShelve uint) ([]*Diff2, error) {
-	return conn.Diff2(myStream+"@="+strconv.FormatUint(uint64(myShelve), 10), yourStream+"@="+strconv.FormatUint(uint64(yourShelve), 10))
+func (conn *Conn) Diff2Shelve(myStream string, myShelve uint64, yourStream string, yourShelve uint64) ([]*Diff2, error) {
+	return conn.Diff2(myStream+"@="+strconv.FormatUint(myShelve, 10), yourStream+"@="+strconv.FormatUint(yourShelve, 10))
 }
