@@ -207,6 +207,7 @@ func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err er
 		line, _, err = reader.ReadLine()
 		if err != nil {
 			if err == io.EOF {
+				err = nil
 				break
 			}
 			return
