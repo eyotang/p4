@@ -173,16 +173,36 @@ var (
 
 func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err error) {
 	var (
-		out  []byte
-		line []byte
+		line   []byte
+		stdout bytes.Buffer
+		stderr bytes.Buffer
 	)
 
-	if out, err = conn.Output(append(JSONArgs, args...)); err != nil {
-		return
+	b := conn.binary
+	if !strings.Contains(b, "/") {
+		b, _ = exec.LookPath(b)
+	}
+	cmd := exec.Cmd{
+		Path:   b,
+		Args:   []string{conn.binary},
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+	if conn.env != nil {
+		cmd.Env = conn.env
+	}
+	if conn.address != "" {
+		cmd.Args = append(cmd.Args, "-p", conn.address)
+	}
+	cmd.Args = append(cmd.Args, JSONArgs...)
+	cmd.Args = append(cmd.Args, args...)
+
+	if err = cmd.Run(); err != nil {
+		err = errors.Wrap(err, stderr.String())
 	}
 
 	result = make([]map[string]string, 0)
-	reader := bufio.NewReader(bytes.NewBuffer(out))
+	reader := bufio.NewReader(&stdout)
 	for {
 		line, _, err = reader.ReadLine()
 		if err != nil {
