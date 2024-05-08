@@ -202,7 +202,7 @@ func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err er
 	}
 
 	result = make([]map[string]string, 0)
-	reader := bufio.NewReader(&stdout)
+	reader := bufio.NewReaderSize(&stdout, stdout.Len())
 	for {
 		line, _, err = reader.ReadLine()
 		if err != nil {
