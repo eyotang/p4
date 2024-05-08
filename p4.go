@@ -182,13 +182,14 @@ func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err er
 	}
 
 	result = make([]map[string]string, 0)
-	reader := bufio.NewReader(bytes.NewReader(out))
+	reader := bufio.NewReader(bytes.NewBuffer(out))
 	for {
 		line, _, err = reader.ReadLine()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
+			return
 		}
 		if len(line) <= 0 {
 			continue

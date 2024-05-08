@@ -24,7 +24,7 @@ func TestChange_OutputMaps(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Output Maps", func() {
-			change, err := conn.OutputMaps("describe", "-S", "-s", "6534")
+			change, err := conn.OutputMaps("describe", "-S", "-s", "10067")
 			So(change, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 		})
