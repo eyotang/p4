@@ -171,32 +171,33 @@ var (
 	JSONArgs = []string{"-Mj", "-ztag"}
 )
 
-func (conn *Conn) OutputMaps(args ...string) (result []map[string]any, err error) {
+func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err error) {
 	var (
-		out    []byte
-		line   []byte
-		reader *bufio.Scanner
+		out  []byte
+		line []byte
 	)
 
 	if out, err = conn.Output(append(JSONArgs, args...)); err != nil {
 		return
 	}
 
-	result = make([]map[string]any, 0)
-	reader = bufio.NewScanner(bytes.NewReader(out))
-	for reader.Scan() {
-		line = reader.Bytes()
+	result = make([]map[string]string, 0)
+	reader := bufio.NewReader(bytes.NewReader(out))
+	for {
+		line, _, err = reader.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+		}
 		if len(line) <= 0 {
 			continue
 		}
-		r := make(map[string]any)
+		r := make(map[string]string)
 		if err = json.Unmarshal(line, &r); err != nil {
 			return
 		}
 		result = append(result, r)
-	}
-	if err = reader.Err(); err != nil {
-		return
 	}
 	return
 }
