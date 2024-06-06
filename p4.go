@@ -63,6 +63,7 @@ func (conn *Conn) Login() (err error) {
 	env := []string{
 		"P4PORT=" + conn.address,
 		"P4USER=" + conn.username,
+		"P4CHARSET=utf8",
 	}
 	if conn.client != "" {
 		env = append(env, "P4CLIENT="+conn.client)
