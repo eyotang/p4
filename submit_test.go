@@ -68,7 +68,7 @@ func TestSubmit_SubmitShelve(t *testing.T) {
 			}
 
 			// 提交新的shelve CL
-			message, err = conn.SubmitShelve(reshelveCL)
+			message, err = conn.SubmitShelve(reshelveCL, "")
 			So(message, ShouldNotBeEmpty)
 			if err != nil {
 				message, err = conn.DeleteShelve(reshelveCL)

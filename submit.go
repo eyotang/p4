@@ -5,11 +5,15 @@ import (
 	"strings"
 )
 
-func (conn *Conn) SubmitShelve(change uint64) (message string, err error) {
+func (conn *Conn) SubmitShelve(change uint64, desc string) (message string, err error) {
 	var (
 		out []byte
 	)
-	out, err = conn.Output([]string{"submit", "-e", strconv.FormatUint(change, 10)})
+	args := []string{"submit", "-e", strconv.FormatUint(change, 10)}
+	if len(desc) > 0 {
+		args = append(args, []string{"-d", desc}...)
+	}
+	out, err = conn.Output(args)
 	message = strings.TrimSpace(string(out))
 	return
 }
