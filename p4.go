@@ -522,7 +522,9 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		return &user
 
 	case "describe":
-		var path string
+		var (
+			path string
+		)
 		if v, ok := imap["path"]; ok {
 			path = v.(string)
 		}
@@ -535,6 +537,23 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 			Time:       imap["time"].(string),
 			Client:     imap["client"].(string),
 			Status:     imap["status"].(string),
+		}
+		i := 0
+		for {
+			idx := strconv.Itoa(i)
+			if v, ok := imap["depotFile"+idx]; !ok {
+				break
+			} else {
+				rev, _ := strconv.ParseInt(imap["rev"+idx].(string), 10, 64)
+				file := &File{
+					DepotFile: v.(string),
+					Revision:  rev,
+					Action:    imap["action"+idx].(string),
+					Type:      imap["type"+idx].(string),
+				}
+				d.DepotFiles = append(d.DepotFiles, file)
+			}
+			i++
 		}
 		return &d
 
