@@ -29,3 +29,17 @@ func (conn *Conn) Reshelve(shelveCL uint64) (message string, err error) {
 	message = strings.TrimSpace(string(out))
 	return
 }
+
+func (conn *Conn) Unshelve(shelveCL uint64) (message string, err error) {
+	var out []byte
+	out, err = conn.Output([]string{"unshelve", "-s", strconv.FormatUint(shelveCL, 10), "-f"})
+	message = strings.TrimSpace(string(out))
+	return
+}
+
+func (conn *Conn) UnshelveBypassExclusive(shelveCL uint64) (message string, err error) {
+	var out []byte
+	out, err = conn.Output([]string{"unshelve", "--bypass-exclusive-lock", "-s", strconv.FormatUint(shelveCL, 10), "-f"})
+	message = strings.TrimSpace(string(out))
+	return
+}
