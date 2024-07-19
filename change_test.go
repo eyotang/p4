@@ -1,6 +1,9 @@
 package p4
 
 import (
+	"fmt"
+	"os"
+	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -41,6 +44,54 @@ func TestChange_ChangeList(t *testing.T) {
 			change, err := conn.ChangeList(6534)
 			So(change, ShouldNotBeNil)
 			So(change.Type, ShouldEqual, "public")
+			So(err, ShouldBeNil)
+		})
+	})
+}
+
+func TestChange_NewChangeList(t *testing.T) {
+	var (
+		conn *Conn
+		err  error
+	)
+	conn, err = setup(t)
+	Convey("test changes", t, func() {
+		So(err, ShouldBeNil)
+
+		Convey("List shelved", func() {
+			// 查询stream
+			stream, err := conn.ChangeListStream(12732)
+			So(stream, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+
+			// 创建临时partitioned workspace
+			streamWs := strings.Trim(stream, "/")
+
+			// root_DM99.ZGame.Project-Development-xiner_test
+			client := "root" + "_" + strings.ReplaceAll(streamWs, "/", "-")
+			wsRoot, _ := os.Getwd()
+			clientInfo := Client{
+				Client:        client,
+				Owner:         "root",
+				Root:          wsRoot + "/" + client,
+				Options:       "noallwrite noclobber nocompress unlocked nomodtime normdir",
+				SubmitOptions: "submitunchanged",
+				Stream:        stream,
+				View:          []string{fmt.Sprintf("%s/... //%s/...", stream, client)},
+			}
+			message, err := conn.CreatePartitionClient(clientInfo)
+			So(message, ShouldNotBeEmpty)
+			// Client root_DM99.ZGame.Project-Development-xiner_test saved.
+			So(message, ShouldEqual, fmt.Sprintf("Client %s saved.", client))
+			So(err, ShouldBeNil)
+
+			conn = conn.WithClient(client)
+			change, err := conn.NewChangeList(NewChangeList{
+				Change:      "new",
+				User:        "sunqi01",
+				Description: "123",
+			})
+			So(change, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 		})
 	})
