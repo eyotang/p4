@@ -68,6 +68,21 @@ type ChangeList struct {
 	Files       []string
 }
 
+type NewChangeList struct {
+	Change      string // 固定传"new"
+	Date        string
+	Client      string
+	User        string
+	Status      string
+	Type        string
+	Description string
+	ImportedBy  string
+	Identity    string
+	Jobs        []string
+	Stream      string
+	Files       []string
+}
+
 func (cl *ChangeList) String() string {
 	var (
 		contentBuf = bytes.NewBuffer(nil)
@@ -162,5 +177,29 @@ func (conn *Conn) ChangeListStream(change uint64) (stream string, err error) {
 
 	stream = client.Stream
 
+	return
+}
+
+func (conn *Conn) NewChangeList(cl NewChangeList) (change uint64, err error) {
+	var (
+		out        []byte
+		contentBuf = bytes.NewBuffer(nil)
+	)
+	if _, err = _changeTemplate.Parse(_changeTemplateTxt); err != nil {
+		return
+	}
+	if err = _changeTemplate.Execute(contentBuf, cl); err != nil {
+		return
+	}
+	if out, err = conn.Input([]string{"change", "-i"}, contentBuf.Bytes()); err != nil {
+		return
+	}
+	message := strings.TrimSpace(string(out))
+	if strings.HasPrefix(message, "Change") {
+		_, err = fmt.Sscanf(message, "Change %d created.", &change)
+		if err != nil {
+			return 0, fmt.Errorf("failed to parse change list number: %v", err)
+		}
+	}
 	return
 }
