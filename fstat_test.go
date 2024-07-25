@@ -75,10 +75,10 @@ func TestConn_Fstat(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		conn = conn.WithClient(client)
-		var result []Result
+		var result []*Stat
 
 		Convey("Describe Shelved", func() {
-			result, err = conn.Fstat([]string{"//Arl.Private.Project/Mainline/main/Assets/77.txt"})
+			result, err = conn.Fstats([]string{"//Arl.Private.Project/Mainline/main/Assets/77.txt"})
 			So(result, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 		})
