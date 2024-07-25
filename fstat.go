@@ -13,7 +13,7 @@ type Stat struct {
 	HeadModTime int64
 	FileSize    int64
 	Digest      string
-	OtherLock0  string
+	OtherLock   string
 }
 
 func (f *Stat) String() string {
