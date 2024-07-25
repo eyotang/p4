@@ -298,6 +298,7 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 			HeadAction: r["headAction"],
 			Digest:     r["digest"],
 			HeadType:   r["headType"],
+			OtherLock0: r["otherLock0"],
 		}
 
 		// Brilliant. We get the integers as decimal strings. Sigh.

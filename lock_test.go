@@ -9,36 +9,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestFstat_FileExist(t *testing.T) {
-	var (
-		conn *Conn
-		err  error
-	)
-	conn, err = setup(t)
-	Convey("test Fstat", t, func() {
-		So(err, ShouldBeNil)
-
-		Convey("File exist", func() {
-			yes, err := conn.FileExist("//.swarm/triggers/create_swarm_review.py")
-			So(yes, ShouldBeTrue)
-			So(err, ShouldBeNil)
-		})
-
-		Convey("File not exist", func() {
-			yes, err := conn.FileExist("//.swarm/triggers/create_swarm_review2.py")
-			So(yes, ShouldBeFalse)
-			So(err, ShouldBeNil)
-		})
-
-		Convey("File(dir) not exist", func() {
-			yes, err := conn.FileExist("//.swarm/triggers/")
-			So(yes, ShouldBeFalse)
-			So(err, ShouldBeNil)
-		})
-	})
-}
-
-func TestConn_Fstat(t *testing.T) {
+func TestConn_Unlock(t *testing.T) {
 	var (
 		conn *Conn
 		err  error
@@ -75,11 +46,10 @@ func TestConn_Fstat(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		conn = conn.WithClient(client)
-		var result []Result
 
 		Convey("Describe Shelved", func() {
-			result, err = conn.Fstat([]string{"//Arl.Private.Project/Mainline/main/Assets/77.txt"})
-			So(result, ShouldNotBeNil)
+			message, err = conn.Unlock("//Arl.Private.Project/Mainline/main/Assets")
+			So(message, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 		})
 	})
