@@ -30,3 +30,12 @@ func TestChange_OutputMaps(t *testing.T) {
 		})
 	})
 }
+
+func TestConn_Trust(t *testing.T) {
+	Convey("test Trust", t, func() {
+		address := os.Getenv("P4PORT")
+		msg, err := Trust(address)
+		So(msg, ShouldNotBeEmpty)
+		So(err, ShouldBeNil)
+	})
+}

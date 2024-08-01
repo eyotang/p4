@@ -256,6 +256,18 @@ func (conn *Conn) RunMarshaled(command string, args []string) (result []Result, 
 	return result, err
 }
 
+func Trust(address string) (string, error) {
+	conn := &Conn{ConnOptions: ConnOptions{
+		address: address,
+		binary:  "p4",
+	}}
+	out, err := conn.Output([]string{"trust", "-y", "-f"})
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
 func interpretResult(in map[interface{}]interface{}, command string) Result {
 	imap := map[string]interface{}{}
 	for k, v := range in {
