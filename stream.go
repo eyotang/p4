@@ -17,6 +17,7 @@ type StreamInfo struct {
 	Parent  string // steam type为mainline时，parent必须为none，其余类型stream需要填写现有的stream（格式：//depotname/streamname）
 	Type    string // mainline, development, release, virtual, task
 	Options string // [all|owner]submit, [un]locked, [no]toparent, [no]fromparent, mergeany|mergedown
+	Paths   []string
 }
 
 const (
@@ -65,7 +66,7 @@ func (conn *Conn) Stream(location string) (stream *StreamInfo, err error) {
 		ok     bool
 		result []Result
 	)
-	if result, err = conn.RunMarshaled("streams", []string{location}); err != nil {
+	if result, err = conn.RunMarshaled("stream", []string{"-o", location}); err != nil {
 		return
 	}
 	if len(result) == 0 {

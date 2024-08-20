@@ -117,3 +117,21 @@ func TestStream_CreateVirtualStream(t *testing.T) {
 		})
 	})
 }
+
+func TestStream_ImportStream(t *testing.T) {
+	var (
+		si *StreamInfo
+
+		stream = "//DM99.ZGame.Project/Main/ZGame_Mainline"
+	)
+	conn, err := setup(t)
+	Convey("test Get Stream functions", t, func() {
+		So(err, ShouldBeNil)
+
+		Convey("Get stream info", func() {
+			si, err = conn.Stream(stream)
+			So(err, ShouldBeNil)
+			So(si.Stream, ShouldEqual, stream)
+		})
+	})
+}

@@ -447,6 +447,16 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 			Type:    imap["Type"].(string),
 			Options: imap["Options"].(string),
 		}
+		i := 0
+		for {
+			idx := strconv.Itoa(i)
+			if v, ok := imap["Paths"+idx]; !ok {
+				break
+			} else {
+				stream.Paths = append(stream.Paths, v.(string))
+			}
+			i++
+		}
 		return &stream
 
 	case "diff2":
