@@ -499,9 +499,10 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 
 	case "client":
 		var (
-			views  []string
-			stream string
-			host   string
+			views       []string
+			stream      string
+			host        string
+			description string
 		)
 		for k, v := range imap {
 			if strings.HasPrefix(k, "View") {
@@ -514,11 +515,14 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		if v, exist := imap["Host"]; exist {
 			host = v.(string)
 		}
+		if v, exist := imap["Description"]; exist {
+			description = v.(string)
+		}
 		client := Client{
 			Client:        imap["Client"].(string),
 			Owner:         imap["Owner"].(string),
 			Host:          host,
-			Description:   strings.TrimSpace(imap["Description"].(string)),
+			Description:   strings.TrimSpace(description),
 			Root:          imap["Root"].(string),
 			Options:       imap["Options"].(string),
 			SubmitOptions: imap["SubmitOptions"].(string),
