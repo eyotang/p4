@@ -13,6 +13,7 @@ type Stat struct {
 	HeadModTime int64
 	FileSize    int64
 	Digest      string
+	OtherLock   string
 }
 
 func (f *Stat) String() string {
@@ -22,8 +23,20 @@ func (f *Stat) String() string {
 
 func (conn *Conn) Fstat(paths []string) (results []Result, err error) {
 	r, err := conn.RunMarshaled("fstat",
-		append([]string{"-Of", "-Ol"}, paths...))
+		append([]string{"-Of", "-Olh"}, paths...))
 	return r, err
+}
+
+func (conn *Conn) Fstats(paths []string) (stats []*Stat, err error) {
+	results, err := conn.RunMarshaled("fstat", paths)
+	for _, result := range results {
+		if stat, ok := result.(*Stat); !ok {
+			continue
+		} else {
+			stats = append(stats, stat)
+		}
+	}
+	return
 }
 
 func (conn *Conn) FileExist(path string) (yes bool, err error) {

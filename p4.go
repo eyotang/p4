@@ -318,6 +318,15 @@ func interpretResult(in map[interface{}]interface{}, command string) Result {
 		st.HeadChange, _ = strconv.ParseInt(r["headChange"], 10, 64)
 		st.HeadModTime, _ = strconv.ParseInt(r["headModTime"], 10, 64)
 		st.FileSize, _ = strconv.ParseInt(r["fileSize"], 10, 64)
+
+		if _, ok := r["otherLock"]; ok { // 存在otherLock，表示有人锁定，锁定人的key是otherLockn
+			for k, v := range r {
+				if strings.HasPrefix(k, "otherLock") && k != "otherLock" {
+					st.OtherLock = v
+					break
+				}
+			}
+		}
 		return &st
 
 	case "changes":
