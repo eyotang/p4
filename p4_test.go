@@ -1,19 +1,16 @@
 package p4
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func setup(t *testing.T) (*Conn, error) {
-	//address := os.Getenv("P4PORT") // ssl:localhost:1666
-	//user := os.Getenv("P4USER")
-	//password := os.Getenv("P4PASSWD")
-
-	address := "ssl:techcentertest.int.hypergryph.com:1666"
-	user := "root"
-	password := "p4super@2021"
+	address := os.Getenv("P4PORT") // ssl:localhost:1666
+	user := os.Getenv("P4USER")
+	password := os.Getenv("P4PASSWD")
 	return NewConn(address, user, password)
 }
 
