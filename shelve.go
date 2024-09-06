@@ -30,6 +30,16 @@ func (conn *Conn) Reshelve(shelveCL uint64) (message string, err error) {
 	return
 }
 
+func (conn *Conn) UserReshelve(shelveCL uint64, userName string) (message string, err error) {
+	var (
+		out []byte
+	)
+	conn.env = append(conn.env, "P4USER="+userName)
+	out, err = conn.Output([]string{"reshelve", "-s", strconv.FormatUint(shelveCL, 10), "-f"})
+	message = strings.TrimSpace(string(out))
+	return
+}
+
 func (conn *Conn) Unshelve(shelveCL, CL uint64) (message string, err error) {
 	var out []byte
 	if CL != 0 {
