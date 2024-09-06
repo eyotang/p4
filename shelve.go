@@ -35,7 +35,7 @@ func (conn *Conn) UserReshelve(shelveCL uint64, userName string) (message string
 		out []byte
 	)
 	conn.env = append(conn.env, "P4USER="+userName)
-	out, err = conn.Output([]string{"reshelve", "-s", strconv.FormatUint(shelveCL, 10), "-f"})
+	out, err = conn.Output([]string{"reshelve", "-s", strconv.FormatUint(shelveCL, 10)})
 	message = strings.TrimSpace(string(out))
 	return
 }
