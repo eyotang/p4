@@ -81,7 +81,7 @@ func (conn *Conn) Login() (err error) {
 			env = append(env, "P4TICKETS="+path.Join(home, ".p4tickets"))
 		}
 	}
-	//fmt.Println(env)
+	fmt.Println(env)
 
 	var (
 		password = bytes.NewBufferString(conn.password)
