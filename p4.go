@@ -93,7 +93,7 @@ func (conn *Conn) Login() (err error) {
 	if err = cmd.Run(); err != nil {
 		return P4Error{err, []string{"p4", "login"}, stderr.Bytes()}
 	}
-	//env = append(env, "P4PASSWD="+tokenRegexp.FindString(token.String()))
+	env = append(env, "P4PASSWD="+tokenRegexp.FindString(token.String()))
 	env = append(env, "P4TICKETS="+os.Getenv("P4Tickets"))
 	conn.env = env
 	return
