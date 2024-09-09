@@ -78,7 +78,7 @@ func (conn *Conn) Login() (err error) {
 		if runtime.GOOS == "darwin" {
 			env = append(env, "P4TICKETS="+path.Join(home, ".tickets.txt"))
 		} else {
-			env = append(env, "P4TICKETS="+path.Join(home, ".tickets"))
+			env = append(env, "P4TICKETS="+path.Join(home, ".p4tickets"))
 		}
 	}
 	//fmt.Println(env)
