@@ -19,7 +19,8 @@ func TestConn_UserReshelve(t *testing.T) {
 		Convey("List shelved", func() {
 			conn = conn.WithClient("root_arl_mainline")
 
-			message, err := conn.UserReshelve(16184, "sunqi01")
+			conn.ChangeUser("guanxiao", "C72AFEA55FC4B855443D2429D2557BC8")
+			message, err := conn.Reshelve(16309)
 			fmt.Println(message)
 			So(message, ShouldNotBeNil)
 			So(err, ShouldBeNil)
