@@ -71,11 +71,16 @@ func (conn *Conn) Login() (err error) {
 	if runtime.GOOS == "windows" {
 		home := os.Getenv("USERPROFILE")
 		env = append(env, "P4TRUST="+path.Join(home, "p4trust.txt"))
+		env = append(env, "P4TICKETS="+path.Join(home, "p4tickets.txt"))
 	} else {
 		home := os.Getenv("HOME")
 		env = append(env, "P4TRUST="+path.Join(home, ".p4trust"))
+		if runtime.GOOS == "darwin" {
+			env = append(env, "P4TICKETS="+path.Join(home, ".tickets.txt"))
+		} else {
+			env = append(env, "P4TICKETS="+path.Join(home, ".p4tickets"))
+		}
 	}
-	//fmt.Println(env)
 
 	var (
 		password = bytes.NewBufferString(conn.password)
