@@ -203,3 +203,10 @@ func (conn *Conn) NewChangeList(cl NewChangeList) (change uint64, err error) {
 	}
 	return
 }
+
+func (conn *Conn) DeleteChange(cl uint64) (message string, err error) {
+	var out []byte
+	out, err = conn.Output([]string{"change", "-d", strconv.FormatUint(cl, 10)})
+	message = strings.TrimSpace(string(out))
+	return
+}

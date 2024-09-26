@@ -96,3 +96,24 @@ func TestChange_NewChangeList(t *testing.T) {
 		})
 	})
 }
+
+func TestConn_DeleteChange(t *testing.T) {
+	var (
+		conn *Conn
+		err  error
+	)
+	conn, err = setup(t)
+	Convey("test changes", t, func() {
+		So(err, ShouldBeNil)
+
+		Convey("List shelved", func() {
+			conn = conn.WithClient("root_Arl.Private.Project-Mainline-main1")
+
+			conn.ChangeUser("sunqi01", "B2697CD7CC377C6AB86CA886B09E81CA")
+			message, err := conn.DeleteChange(17529)
+			fmt.Println(message)
+			So(message, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+		})
+	})
+}
