@@ -210,3 +210,10 @@ func (conn *Conn) DeleteChange(cl uint64) (message string, err error) {
 	message = strings.TrimSpace(string(out))
 	return
 }
+
+func (conn *Conn) ForceDeleteChange(cl uint64) (message string, err error) {
+	var out []byte
+	out, err = conn.Output([]string{"change", "-d", "-f", strconv.FormatUint(cl, 10)})
+	message = strings.TrimSpace(string(out))
+	return
+}
