@@ -7,6 +7,7 @@ package p4
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,88 +23,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ConnOptions Conn is an interface to the Conn command line client.
-type ConnOptions struct {
-	address  string
-	binary   string
-	username string
-	password string
-	client   string
-}
-
-type Conn struct {
-	ConnOptions
-	env []string
-}
-
-func NewConn(address, username, password string) (conn *Conn, err error) {
-	return NewClientConn(address, username, password, "")
-}
-
-func NewClientConn(address, username, password, client string) (conn *Conn, err error) {
-	conn = &Conn{
-		ConnOptions: ConnOptions{
-			binary:   "p4",
-			address:  address,
-			username: username,
-			password: password,
-		}}
-	if client != "" {
-		conn.client = client
-	}
-	if err = conn.Login(); err != nil {
-		return
-	}
-	return
-}
-
-var tokenRegexp = regexp.MustCompile("([0-9A-Z]{32})")
-
-func (conn *Conn) Login() (err error) {
-	env := []string{
-		"P4PORT=" + conn.address,
-		"P4USER=" + conn.username,
-		"P4CHARSET=utf8",
-	}
-	if conn.client != "" {
-		env = append(env, "P4CLIENT="+conn.client)
-	}
-	if runtime.GOOS == "windows" {
-		home := os.Getenv("USERPROFILE")
-		env = append(env, "P4TRUST="+path.Join(home, "p4trust.txt"))
-		env = append(env, "P4TICKETS="+path.Join(home, "p4tickets.txt"))
-	} else {
-		home := os.Getenv("HOME")
-		env = append(env, "P4TRUST="+path.Join(home, ".p4trust"))
-		if runtime.GOOS == "darwin" {
-			env = append(env, "P4TICKETS="+path.Join(home, ".tickets.txt"))
-		} else {
-			env = append(env, "P4TICKETS="+path.Join(home, ".p4tickets"))
-		}
-	}
-
-	var (
-		password = bytes.NewBufferString(conn.password)
-		token    bytes.Buffer
-		stderr   bytes.Buffer
-	)
-
-	cmd := exec.Command(conn.binary, "login", "-p")
-	cmd.Env = env
-	cmd.Stdin = password
-	cmd.Stdout = &token
-	cmd.Stderr = &stderr
-
-	log.Println("running", cmd.Args)
-	if err = cmd.Run(); err != nil {
-		return P4Error{err, []string{"p4", "login"}, stderr.Bytes()}
-	}
-	env = append(env, "P4PASSWD="+tokenRegexp.FindString(token.String()))
-	conn.env = env
-	return
-}
-
-func (conn *Conn) WithClient(client string) *Conn {
+func (conn *Conn) SetClient(client string) *Conn {
 	if client != "" {
 		conn.env = append(conn.env, "P4CLIENT="+client)
 	}
@@ -120,12 +40,18 @@ func (conn *Conn) Output(args []string) (out []byte, err error) {
 	if !strings.Contains(b, "/") {
 		b, _ = exec.LookPath(b)
 	}
-	cmd := exec.Cmd{
-		Path:   b,
-		Args:   []string{conn.binary},
-		Stdout: &stdout,
-		Stderr: &stderr,
+
+	// 超时设置
+	timeout := conn.timeout
+	if timeout <= 0 {
+		timeout = defaultTimeout
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, b)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if conn.env != nil {
 		cmd.Env = conn.env
 	}
@@ -134,9 +60,20 @@ func (conn *Conn) Output(args []string) (out []byte, err error) {
 	}
 	cmd.Args = append(cmd.Args, args...)
 
+	// 正常退出ch
+	waitChan := make(chan struct{}, 1)
+	defer close(waitChan)
+
+	// 监听
+	if err = watch(ctx, cmd, waitChan); err != nil {
+		return
+	}
+
 	if err = cmd.Run(); err != nil {
 		err = errors.Wrap(err, stderr.String())
 	}
+	waitChan <- struct{}{}
+
 	out = stdout.Bytes()
 	return
 }
@@ -151,13 +88,18 @@ func (conn *Conn) Input(args []string, input []byte) (out []byte, err error) {
 	if !strings.Contains(b, "/") {
 		b, _ = exec.LookPath(b)
 	}
-	cmd := exec.Cmd{
-		Path:   b,
-		Args:   []string{conn.binary},
-		Stdin:  content,
-		Stdout: &stdout,
-		Stderr: &stderr,
+
+	// 超时设置
+	timeout := conn.timeout
+	if timeout <= 0 {
+		timeout = defaultTimeout
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, b)
+	cmd.Stdin = content
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if conn.env != nil {
 		cmd.Env = conn.env
 	}
@@ -166,9 +108,20 @@ func (conn *Conn) Input(args []string, input []byte) (out []byte, err error) {
 	}
 	cmd.Args = append(cmd.Args, args...)
 
+	// 正常退出ch
+	waitChan := make(chan struct{}, 1)
+	defer close(waitChan)
+
+	// 监听
+	if err = watch(ctx, cmd, waitChan); err != nil {
+		return
+	}
+
 	if err = cmd.Run(); err != nil {
 		err = errors.Wrap(err, stderr.String())
 	}
+	waitChan <- struct{}{}
+
 	out = stdout.Bytes()
 	return
 }
@@ -188,12 +141,18 @@ func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err er
 	if !strings.Contains(b, "/") {
 		b, _ = exec.LookPath(b)
 	}
-	cmd := exec.Cmd{
-		Path:   b,
-		Args:   []string{conn.binary},
-		Stdout: &stdout,
-		Stderr: &stderr,
+
+	// 超时设置
+	timeout := conn.timeout
+	if timeout <= 0 {
+		timeout = defaultTimeout
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, b)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if conn.env != nil {
 		cmd.Env = conn.env
 	}
@@ -203,9 +162,19 @@ func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err er
 	cmd.Args = append(cmd.Args, JSONArgs...)
 	cmd.Args = append(cmd.Args, args...)
 
+	// 正常退出ch
+	waitChan := make(chan struct{}, 1)
+	defer close(waitChan)
+
+	// 监听
+	if err = watch(ctx, cmd, waitChan); err != nil {
+		return
+	}
+
 	if err = cmd.Run(); err != nil {
 		err = errors.Wrap(err, stderr.String())
 	}
+	waitChan <- struct{}{}
 
 	result = make([]map[string]string, 0)
 	reader := bufio.NewReaderSize(&stdout, stdout.Len())
@@ -271,6 +240,73 @@ func Trust(address string) (string, error) {
 		return "", err
 	}
 	return string(out), nil
+}
+
+var tokenRegexp = regexp.MustCompile("([0-9A-Z]{32})")
+
+func (conn *Conn) Login() (err error) {
+	env := []string{
+		"P4PORT=" + conn.address,
+		"P4USER=" + conn.username,
+		"P4CHARSET=utf8",
+	}
+	if conn.client != "" {
+		env = append(env, "P4CLIENT="+conn.client)
+	}
+	if runtime.GOOS == "windows" {
+		home := os.Getenv("USERPROFILE")
+		env = append(env, "P4TRUST="+path.Join(home, "p4trust.txt"))
+		env = append(env, "P4TICKETS="+path.Join(home, "p4tickets.txt"))
+	} else {
+		home := os.Getenv("HOME")
+		env = append(env, "P4TRUST="+path.Join(home, ".p4trust"))
+		if runtime.GOOS == "darwin" {
+			env = append(env, "P4TICKETS="+path.Join(home, ".tickets.txt"))
+		} else {
+			env = append(env, "P4TICKETS="+path.Join(home, ".p4tickets"))
+		}
+	}
+
+	b := conn.binary
+	if !strings.Contains(b, "/") {
+		b, _ = exec.LookPath(b)
+	}
+
+	var (
+		password = bytes.NewBufferString(conn.password)
+		token    bytes.Buffer
+		stderr   bytes.Buffer
+	)
+
+	timeout := conn.timeout
+	if timeout <= 0 {
+		timeout = defaultTimeout
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, b, "login", "-p")
+	cmd.Env = env
+	cmd.Stdin = password
+	cmd.Stdout = &token
+	cmd.Stderr = &stderr
+
+	waitChan := make(chan struct{}, 1)
+	defer close(waitChan)
+
+	if err = watch(ctx, cmd, waitChan); err != nil {
+		return
+	}
+
+	log.Println("running", cmd.Args)
+	if err = cmd.Run(); err != nil {
+		return P4Error{err, []string{"p4", "login"}, stderr.Bytes()}
+	}
+	waitChan <- struct{}{}
+
+	env = append(env, "P4PASSWD="+tokenRegexp.FindString(token.String()))
+	conn.env = env
+	return
 }
 
 func interpretResult(in map[interface{}]interface{}, command string) Result {

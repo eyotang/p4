@@ -49,7 +49,7 @@ func TestConn_Fstat(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		// 查询stream
-		stream, err := conn.ChangeListStream(13049)
+		stream, err := conn.ChangeListStream(20585)
 		So(stream, ShouldNotBeEmpty)
 		So(err, ShouldBeNil)
 
@@ -74,7 +74,7 @@ func TestConn_Fstat(t *testing.T) {
 		//So(message, ShouldEqual, fmt.Sprintf("Client %s saved.", client))
 		So(err, ShouldBeNil)
 
-		conn = conn.WithClient(client)
+		conn = conn.SetClient(client)
 		var result []*Stat
 
 		Convey("Describe Shelved", func() {

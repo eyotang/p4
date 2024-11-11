@@ -45,7 +45,7 @@ func TestConn_Revert(t *testing.T) {
 		//So(message, ShouldEqual, fmt.Sprintf("Client %s saved.", client))
 		So(err, ShouldBeNil)
 
-		conn = conn.WithClient(client)
+		conn = conn.SetClient(client)
 
 		Convey("Describe Shelved", func() {
 			message, err = conn.Revert(15585)

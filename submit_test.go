@@ -57,7 +57,7 @@ func TestSubmit_SubmitShelve(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// 将shelve CL给reshelve成新的shelve CL
-			conn = conn.WithClient(client)
+			conn = conn.SetClient(client)
 			message, err = conn.Reshelve(shelve)
 			So(message, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)

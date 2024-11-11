@@ -60,7 +60,7 @@ func TestChange_NewChangeList(t *testing.T) {
 
 		Convey("List shelved", func() {
 			// 查询stream
-			stream, err := conn.ChangeListStream(12732)
+			stream, err := conn.ChangeListStream(20585)
 			So(stream, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 
@@ -85,7 +85,7 @@ func TestChange_NewChangeList(t *testing.T) {
 			So(message, ShouldEqual, fmt.Sprintf("Client %s saved.", client))
 			So(err, ShouldBeNil)
 
-			conn = conn.WithClient(client)
+			conn = conn.SetClient(client)
 			change, err := conn.NewChangeList(NewChangeList{
 				Change:      "new",
 				User:        "sunqi01",
@@ -107,7 +107,7 @@ func TestConn_DeleteChange(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("List shelved", func() {
-			conn = conn.WithClient("root_Arl.Private.Project-Mainline-main1")
+			conn = conn.SetClient("root_Arl.Private.Project-Mainline-main1")
 
 			conn.ChangeUser("sunqi01", "B2697CD7CC377C6AB86CA886B09E81CA")
 			message, err := conn.DeleteChange(17529)
