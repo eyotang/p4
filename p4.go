@@ -42,9 +42,9 @@ func (conn *Conn) Output(args []string) (out []byte, err error) {
 	}
 
 	// 超时设置
-	timeout := conn.timeout
+	timeout := conn.timeout.OpTimeout(opTypeRead)
 	if timeout <= 0 {
-		timeout = defaultTimeout
+		timeout = defaultExpTimeout
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -90,9 +90,9 @@ func (conn *Conn) Input(args []string, input []byte) (out []byte, err error) {
 	}
 
 	// 超时设置
-	timeout := conn.timeout
+	timeout := conn.timeout.OpTimeout(opTypeWrite)
 	if timeout <= 0 {
-		timeout = defaultTimeout
+		timeout = defaultExpTimeout
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -143,9 +143,9 @@ func (conn *Conn) OutputMaps(args ...string) (result []map[string]string, err er
 	}
 
 	// 超时设置
-	timeout := conn.timeout
+	timeout := conn.timeout.OpTimeout(opTypeRead)
 	if timeout <= 0 {
-		timeout = defaultTimeout
+		timeout = defaultExpTimeout
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -278,9 +278,9 @@ func (conn *Conn) Login() (err error) {
 		stderr   bytes.Buffer
 	)
 
-	timeout := conn.timeout
+	timeout := conn.timeout.OpTimeout(opTypeLogin)
 	if timeout <= 0 {
-		timeout = defaultTimeout
+		timeout = defaultExpTimeout
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

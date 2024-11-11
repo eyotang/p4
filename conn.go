@@ -4,7 +4,23 @@ import (
 	"time"
 )
 
-const defaultTimeout = 15 * time.Second
+const defaultExpTimeout = 15 * time.Second
+
+var defaultTimeout = &Timeout{
+	Login: defaultExpTimeout,
+	Read:  defaultExpTimeout,
+	Write: defaultExpTimeout,
+}
+
+type opType int
+
+const (
+	opTypeInvalid opType = iota
+	opTypeLogin
+	opTypeRead
+	opTypeWrite
+	opTypeMax
+)
 
 // ConnOptions Conn is an interface to the Conn command line client.
 type ConnOptions struct {
@@ -20,7 +36,29 @@ type ConnOptionFunc func(*Conn)
 type Conn struct {
 	ConnOptions
 	env     []string
-	timeout time.Duration
+	timeout *Timeout
+}
+
+type Timeout struct {
+	Login time.Duration `json:"login"`
+	Read  time.Duration `json:"read"`
+	Write time.Duration `json:"write"`
+}
+
+func (t *Timeout) OpTimeout(opt opType) time.Duration {
+	if t == nil {
+		return defaultExpTimeout
+	}
+	switch opt {
+	case opTypeLogin:
+		return t.Login
+	case opTypeRead:
+		return t.Read
+	case opTypeWrite:
+		return t.Write
+	default:
+		return defaultExpTimeout
+	}
 }
 
 func NewConn(address, username, password string, options ...ConnOptionFunc) (conn *Conn, err error) {
@@ -42,22 +80,15 @@ func NewConn(address, username, password string, options ...ConnOptionFunc) (con
 	return
 }
 
-func NewClientConn(address, username, password, client string) (conn *Conn, err error) {
-	if conn, err = NewConn(address, username, password, WithClient(client)); err != nil {
-		return
-	}
-	return
-}
-
 func WithClient(client string) ConnOptionFunc {
 	return func(conn *Conn) {
 		conn.SetClient(client)
 	}
 }
 
-func WithTimeout(timeout time.Duration) ConnOptionFunc {
+func WithTimeout(timeout *Timeout) ConnOptionFunc {
 	return func(conn *Conn) {
-		if timeout > 0 {
+		if timeout != nil {
 			conn.timeout = timeout
 		} else {
 			conn.timeout = defaultTimeout
